@@ -26,6 +26,7 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
     private var isAiming: Bool = false
     private var currentAimX: CGFloat = 0
     private var lastUpdateTime: TimeInterval = 0
+    private var lastShakeTimestamp: TimeInterval = 0
 
     public override func didMove(to view: SKView) {
         backgroundColor = SKColor(red: 0.07, green: 0.08, blue: 0.12, alpha: 1.0)
@@ -36,6 +37,7 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
         setupContainer()
         setupDangerLine()
         setupDropGuide()
+        prefillWithTier1Fruits()
         prepareDropFruit()
     }
 
@@ -59,6 +61,7 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
         setupContainer()
         setupDangerLine()
         setupDropGuide()
+        prefillWithTier1Fruits()
         prepareDropFruit()
     }
 
@@ -67,7 +70,86 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
         effectLayer.removeAllChildren()
         canDrop = true
         isAiming = false
+        prefillWithTier1Fruits()
         prepareDropFruit()
+    }
+
+    /// Pre-fills roughly 1/4 of the box with Tier 1 (Red Currant) fruits on game start
+    public func prefillWithTier1Fruits() {
+        fruitLayer.removeAllChildren()
+
+        let radius = FruitType.redCurrant.radius
+        let diameter = radius * 2
+        let margin: CGFloat = 8
+        let startX = containerOriginX + radius + margin
+        let endX = containerOriginX + containerWidth - radius - margin
+        let startY = containerBottomY + radius + margin
+        let targetFillHeight = containerHeight * 0.25
+        let maxY = containerBottomY + targetFillHeight
+
+        var y = startY
+        var rowIndex = 0
+
+        while y <= maxY {
+            let rowOffset = (rowIndex % 2 == 1) ? radius : 0
+            var x = startX + rowOffset
+
+            while x <= endX {
+                let fruit = FruitNode(fruitType: .redCurrant)
+                let jitterX = CGFloat.random(in: -2...2)
+                let jitterY = CGFloat.random(in: -1...1)
+                fruit.position = CGPoint(x: x + jitterX, y: y + jitterY)
+                fruit.physicsBody?.isDynamic = true
+                fruitLayer.addChild(fruit)
+
+                x += diameter + 3
+            }
+
+            y += diameter * 0.88
+            rowIndex += 1
+        }
+    }
+
+    /// Shakes the board: applies random physical impulses to all fruits and shakes the scene visually
+    public func shakeBoard() {
+        guard gameState?.phase == .playing else { return }
+
+        let now = CACurrentMediaTime()
+        guard now - lastShakeTimestamp > 0.40 else { return }
+        lastShakeTimestamp = now
+
+        // Apply dynamic upward & horizontal impulses to all active fruits
+        for child in fruitLayer.children {
+            guard let fruit = child as? FruitNode,
+                  let body = fruit.physicsBody,
+                  body.isDynamic else {
+                continue
+            }
+
+            let impulseX = CGFloat.random(in: -65...65)
+            let impulseY = CGFloat.random(in: 40...130)
+            body.applyImpulse(CGVector(dx: impulseX, dy: impulseY))
+            body.applyAngularImpulse(CGFloat.random(in: -0.04...0.04))
+        }
+
+        // Screen / Container shake animation
+        let shakeSequence = SKAction.sequence([
+            .moveBy(x: -7, y: 3, duration: 0.03),
+            .moveBy(x: 14, y: -6, duration: 0.035),
+            .moveBy(x: -12, y: 5, duration: 0.035),
+            .moveBy(x: 7, y: -3, duration: 0.03),
+            .moveBy(x: -2, y: 1, duration: 0.025),
+            .move(to: .zero, duration: 0.025)
+        ])
+
+        containerNode.run(shakeSequence)
+        fruitLayer.run(shakeSequence)
+
+        // Audio & Haptics
+        if let state = gameState {
+            AudioManager.shared.playButtonTap(isMuted: state.isMuted)
+            HapticManager.shared.mergeFeedback(tier: .orange, enabled: state.isHapticsEnabled)
+        }
     }
 
     private func setupContainer() {

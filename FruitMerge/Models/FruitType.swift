@@ -53,11 +53,12 @@ public enum FruitType: Int, CaseIterable, Identifiable, Comparable {
         }
     }
 
+    /// Character or emoji representation for fallback/HUD preview
     public var emoji: String {
         switch self {
-        case .redCurrant: return "🍒"
+        case .redCurrant: return "🔴"
         case .blueberry: return "🫐"
-        case .lime: return "🍋‍🟩"
+        case .lime: return "🍈"
         case .purpleGrapeBunch: return "🍇"
         case .orange: return "🍊"
         case .apple: return "🍎"
@@ -69,7 +70,7 @@ public enum FruitType: Int, CaseIterable, Identifiable, Comparable {
         }
     }
 
-    /// Base radius in points for SpriteKit physics and visual circle (balanced for landscape)
+    /// Base radius in points for SpriteKit physics and visual bounds
     public var radius: CGFloat {
         switch self {
         case .redCurrant: return 12
@@ -86,12 +87,12 @@ public enum FruitType: Int, CaseIterable, Identifiable, Comparable {
         }
     }
 
-    /// Primary SKColor for procedural rendering in SpriteKit
+    /// Primary SKColor for particle effects and accents
     public var skPrimaryColor: SKColor {
         switch self {
-        case .redCurrant: return SKColor(red: 0.90, green: 0.12, blue: 0.20, alpha: 1.0)
-        case .blueberry: return SKColor(red: 0.22, green: 0.38, blue: 0.92, alpha: 1.0)
-        case .lime: return SKColor(red: 0.42, green: 0.85, blue: 0.18, alpha: 1.0)
+        case .redCurrant: return SKColor(red: 0.92, green: 0.10, blue: 0.18, alpha: 1.0)
+        case .blueberry: return SKColor(red: 0.20, green: 0.35, blue: 0.92, alpha: 1.0)
+        case .lime: return SKColor(red: 0.40, green: 0.85, blue: 0.15, alpha: 1.0)
         case .purpleGrapeBunch: return SKColor(red: 0.60, green: 0.22, blue: 0.82, alpha: 1.0)
         case .orange: return SKColor(red: 1.00, green: 0.52, blue: 0.08, alpha: 1.0)
         case .apple: return SKColor(red: 0.92, green: 0.16, blue: 0.18, alpha: 1.0)
@@ -113,7 +114,7 @@ public enum FruitType: Int, CaseIterable, Identifiable, Comparable {
         switch self {
         case .redCurrant: return Color(red: 0.65, green: 0.05, blue: 0.12)
         case .blueberry: return Color(red: 0.12, green: 0.20, blue: 0.65)
-        case .lime: return Color(red: 0.28, green: 0.65, blue: 0.10)
+        case .lime: return Color(red: 0.25, green: 0.65, blue: 0.10)
         case .purpleGrapeBunch: return Color(red: 0.40, green: 0.12, blue: 0.60)
         case .orange: return Color(red: 0.85, green: 0.38, blue: 0.05)
         case .apple: return Color(red: 0.70, green: 0.08, blue: 0.10)

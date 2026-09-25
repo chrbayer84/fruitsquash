@@ -31,9 +31,12 @@ public struct ContentView: View {
                     .ignoresSafeArea()
                 }
 
-                // Left HUD Sidebar (Scores, Next Fruit, Evolution Guide, Controls)
+                // Left HUD Sidebar (Scores, Next Fruit, Evolution Guide, Shake, Controls)
                 HUDView(
                     gameState: gameState,
+                    onShake: {
+                        scene?.shakeBoard()
+                    },
                     onRestart: {
                         restartGame()
                     }
@@ -58,6 +61,7 @@ public struct ContentView: View {
             }
             .onAppear {
                 setupScene(size: geometry.size)
+                configureMotionShake()
             }
             .onChange(of: geometry.size) { newSize in
                 setupScene(size: newSize)
@@ -65,6 +69,12 @@ public struct ContentView: View {
         }
         .statusBarHidden(true)
         .persistentSystemOverlays(.hidden)
+    }
+
+    private func configureMotionShake() {
+        MotionManager.shared.onShakeDetected = { [weak scene] in
+            scene?.shakeBoard()
+        }
     }
 
     private var readyOverlay: some View {
@@ -77,8 +87,8 @@ public struct ContentView: View {
                     .font(.system(size: 28, weight: .black, design: .rounded))
                     .foregroundColor(.white)
 
-                Text("Drag anywhere to aim horizontally and release to drop fruits.\nCombine matching fruits to evolve them all the way to a Watermelon!")
-                    .font(.system(size: 14, weight: .medium, design: .rounded))
+                Text("Drag anywhere to aim horizontally and release to drop fruits.\nCombine matching fruits to evolve them all the way to a Watermelon!\nShake your iPad or tap SHAKE BOARD anytime to jiggle the fruits.")
+                    .font(.system(size: 13.5, weight: .medium, design: .rounded))
                     .multilineTextAlignment(.center)
                     .foregroundColor(.white.opacity(0.85))
                     .padding(.horizontal, 20)
