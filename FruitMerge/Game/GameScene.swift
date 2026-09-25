@@ -90,7 +90,7 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
             width: containerWidth,
             height: containerHeight
         )
-        let backgroundBox = SKShapeNode(roundedRect: backgroundRect, cornerRadius: 20)
+        let backgroundBox = SKShapeNode(rect: backgroundRect, cornerRadius: 20)
         backgroundBox.fillColor = SKColor(red: 0.11, green: 0.13, blue: 0.19, alpha: 0.95)
         backgroundBox.strokeColor = SKColor.white.withAlphaComponent(0.18)
         backgroundBox.lineWidth = 2.5
@@ -142,10 +142,10 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
         path.move(to: CGPoint(x: containerOriginX + 8, y: dangerLineY))
         path.addLine(to: CGPoint(x: containerOriginX + containerWidth - 8, y: dangerLineY))
 
-        dangerLineNode.path = path
+        let dashedPath = path.copy(dashingWithPhase: 0, lengths: [6.0, 6.0])
+        dangerLineNode.path = dashedPath
         dangerLineNode.strokeColor = SKColor.systemRed.withAlphaComponent(0.55)
         dangerLineNode.lineWidth = 2
-        dangerLineNode.lineDashPattern = [6, 6]
         dangerLineNode.zPosition = 5
         containerNode.addChild(dangerLineNode)
 
@@ -158,7 +158,6 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
     private func setupDropGuide() {
         dropGuideLine.strokeColor = SKColor.white.withAlphaComponent(0.28)
         dropGuideLine.lineWidth = 1.5
-        dropGuideLine.lineDashPattern = [4, 4]
         dropGuideLine.zPosition = 9
         dropGuideLine.isHidden = true
         addChild(dropGuideLine)
@@ -193,7 +192,8 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
         path.move(to: CGPoint(x: preview.position.x, y: preview.position.y))
         path.addLine(to: CGPoint(x: preview.position.x, y: containerBottomY))
 
-        dropGuideLine.path = path
+        let dashedPath = path.copy(dashingWithPhase: 0, lengths: [4.0, 4.0])
+        dropGuideLine.path = dashedPath
         dropGuideLine.isHidden = !isAiming
     }
 
