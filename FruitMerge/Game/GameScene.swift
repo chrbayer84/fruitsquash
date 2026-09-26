@@ -7,7 +7,7 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
     // Scene dimensions & orientation
     public var isPortrait: Bool = false
     public var hudOffset: CGFloat = 210
-    public var scaleFactor: CGFloat { isPortrait ? 1.0 : 1.20 }
+    public var scaleFactor: CGFloat { 1.0 }
 
     private var containerWidth: CGFloat = 0
     private var containerHeight: CGFloat = 0
@@ -333,35 +333,35 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
     private func setupContainer() {
         containerNode.removeAllChildren()
 
-        if isPortrait {
-            // Portrait Layout: Center box vertically in the available area below the top HUD
-            let topPadding = hudOffset + 16
-            let availableWidth = max(240, size.width - 36)
-            let availableAreaHeight = max(240, size.height - topPadding)
-            let baseSize = min(availableWidth, availableAreaHeight - 36)
-            let boxSize = baseSize * 0.75
+        let minDim = min(size.width, size.height)
 
-            containerWidth = boxSize
-            containerHeight = boxSize
+        // Unified absolute box size that is identical in both Portrait and Landscape
+        let availableWidth = minDim - 32
+        let availableHeight = minDim - 36
+        let boxSize = min(availableWidth, availableHeight) * 0.92
+
+        containerWidth = boxSize
+        containerHeight = boxSize
+
+        if isPortrait {
+            // Portrait Layout: Center box horizontally and vertically in the area below top HUD
+            let topPadding = hudOffset + 14
+            let availableAreaHeight = max(240, size.height - topPadding)
+
             containerOriginX = (size.width - boxSize) / 2
-            // Vertically centered in the available height below the top HUD
             containerBottomY = (availableAreaHeight - boxSize) / 2
             dropZoneY = containerBottomY + containerHeight + 22
             dangerLineY = containerBottomY + containerHeight - 12
         } else {
-            let leftPadding = hudOffset + 16
-            let availableWidth = max(240, size.width - leftPadding - 36)
-            let availableHeight = max(240, size.height * 0.88)
-            let baseSize = min(availableWidth, availableHeight)
-            let boxSize = baseSize * 0.90 // +20% larger in Landscape mode
+            // Landscape Layout: Center box horizontally and vertically in the area to the right of left HUD
+            let leftPadding = hudOffset + 14
+            let availableAreaWidth = size.width - leftPadding
+            let centerX = leftPadding + (availableAreaWidth / 2)
 
-            containerWidth = boxSize
-            containerHeight = boxSize
-            let centerX = leftPadding + (size.width - leftPadding) / 2
             containerOriginX = centerX - (boxSize / 2)
-            containerBottomY = (size.height - boxSize) / 2 - 10
-            dropZoneY = containerBottomY + containerHeight + (24 * scaleFactor)
-            dangerLineY = containerBottomY + containerHeight - (12 * scaleFactor)
+            containerBottomY = (size.height - boxSize) / 2
+            dropZoneY = containerBottomY + containerHeight + 22
+            dangerLineY = containerBottomY + containerHeight - 12
         }
 
         // Visual Square Background with Theme Tinting

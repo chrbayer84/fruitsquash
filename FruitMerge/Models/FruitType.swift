@@ -101,12 +101,12 @@ public enum FruitType: Int, CaseIterable, Identifiable, Comparable {
         let baseR = radius(scale: scale)
         switch self {
         case .dragonfruit:
-            let w = baseR * 1.65
-            let h = w * 1.5 // exactly 1.5x height
+            let h = baseR * 1.85
+            let w = h / 1.5 // 1.5x height
             return CGSize(width: w, height: h)
         case .pineapple:
-            let w = baseR * 1.50
-            let h = w * 1.8 // exactly 1.8x height with green crown on top
+            let h = baseR * 1.95
+            let w = h / 1.8 // exactly 1.8x height with green crown on top
             return CGSize(width: w, height: h)
         case .watermelon:
             // Whole round watermelon (circular 1:1)

@@ -77,27 +77,18 @@ public final class FruitNode: SKNode {
 
     private func setupVisuals() {
         let size = effectiveSize
-        let visualSize: CGSize
-
-        if fruitType == .pineapple {
-            // Visual picture scaled 60% bigger while keeping physics boundary unchanged
-            visualSize = CGSize(width: size.width * 1.60, height: size.height * 1.60)
-        } else {
-            visualSize = size
-        }
-
-        let texture = FruitNode.texture(for: fruitType, size: visualSize)
+        let texture = FruitNode.texture(for: fruitType, size: size)
 
         let sprite = SKSpriteNode(texture: texture)
-        sprite.size = visualSize
+        sprite.size = size
         sprite.zPosition = 10
         addChild(sprite)
         self.spriteNode = sprite
 
         // Debug outline for pineapple physics collision boundary
         if fruitType == .pineapple {
-            let physicsWidth = size.width * 0.80
-            let physicsHeight = size.height * 0.80
+            let physicsWidth = size.width * 0.90
+            let physicsHeight = size.height * 0.90
             let ellipseRect = CGRect(
                 x: -physicsWidth / 2,
                 y: -physicsHeight / 2,
@@ -131,9 +122,9 @@ public final class FruitNode: SKNode {
             let path = CGPath(ellipseIn: ellipseRect, transform: nil)
             body = SKPhysicsBody(polygonFrom: path)
         } else if fruitType == .pineapple {
-            // Invisible physics shape is 20% smaller (aspect ratio 1.0 : 1.5)
-            let physicsWidth = size.width * 0.80
-            let physicsHeight = size.height * 0.80
+            // Invisible physics shape (aspect ratio 1.0 : 1.8)
+            let physicsWidth = size.width * 0.90
+            let physicsHeight = size.height * 0.90
             let ellipseRect = CGRect(
                 x: -physicsWidth / 2,
                 y: -physicsHeight / 2,
@@ -142,9 +133,6 @@ public final class FruitNode: SKNode {
             )
             let path = CGPath(ellipseIn: ellipseRect, transform: nil)
             body = SKPhysicsBody(polygonFrom: path)
-        } else {
-            // Whole round watermelon and all standard circular fruits
-            body = SKPhysicsBody(circleOfRadius: size.width / 2)
         }
 
         body.isDynamic = true
