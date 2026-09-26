@@ -81,9 +81,41 @@ public enum FruitType: Int, CaseIterable, Identifiable, Comparable {
         case .apple: return 51.7
         case .peach: return 62.7
         case .coconut: return 74.8
-        case .dragonfruit: return 88.0
-        case .pineapple: return 102.3
+        case .dragonfruit: return 84.0
+        case .pineapple: return 98.0
         case .watermelon: return 118.8
+        }
+    }
+
+    /// Aspect ratio (width / height) - Dragonfruit, Pineapple, and Watermelon slice are oblong ellipses
+    public var aspectRatio: CGFloat {
+        switch self {
+        case .dragonfruit: return 0.80
+        case .pineapple: return 0.78
+        case .watermelon: return 1.18
+        default: return 1.0
+        }
+    }
+
+    /// Dynamic physical dimensions (width, height) accounting for elliptical shapes
+    public func size(scale: CGFloat = 1.0) -> CGSize {
+        let baseR = radius(scale: scale)
+        switch self {
+        case .dragonfruit:
+            let h = baseR * 2.25
+            let w = h * aspectRatio
+            return CGSize(width: w, height: h)
+        case .pineapple:
+            let h = baseR * 2.28
+            let w = h * aspectRatio
+            return CGSize(width: w, height: h)
+        case .watermelon:
+            let h = baseR * 1.95
+            let w = h * aspectRatio
+            return CGSize(width: w, height: h)
+        default:
+            let d = baseR * 2
+            return CGSize(width: d, height: d)
         }
     }
 

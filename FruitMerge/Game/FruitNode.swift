@@ -27,25 +27,43 @@ public final class FruitNode: SKNode {
         fatalError("init(coder:) has not been implemented")
     }
 
+    public var effectiveSize: CGSize {
+        fruitType.size(scale: scaleFactor)
+    }
+
     public var effectiveRadius: CGFloat {
-        fruitType.radius(scale: scaleFactor)
+        max(effectiveSize.width, effectiveSize.height) / 2
     }
 
     private func setupVisuals() {
-        let physicalDiameter = effectiveRadius * 2
-        // Scaled to 100% of physical diameter for flush, seamless contact boundaries
-        let visualDiameter = physicalDiameter * 1.00
-        let texture = FruitNode.texture(for: fruitType, diameter: visualDiameter)
+        let size = effectiveSize
+        let texture = FruitNode.texture(for: fruitType, size: size)
 
         let sprite = SKSpriteNode(texture: texture)
-        sprite.size = CGSize(width: visualDiameter, height: visualDiameter)
+        sprite.size = size
         sprite.zPosition = 10
         addChild(sprite)
         self.spriteNode = sprite
     }
 
     private func setupPhysics() {
-        let body = SKPhysicsBody(circleOfRadius: effectiveRadius)
+        let size = effectiveSize
+        let body: SKPhysicsBody
+
+        if fruitType == .dragonfruit || fruitType == .pineapple || fruitType == .watermelon {
+            // Elliptical rigid body matching natural oblong fruit/slice profile
+            let ellipseRect = CGRect(
+                x: -size.width / 2,
+                y: -size.height / 2,
+                width: size.width,
+                height: size.height
+            )
+            let path = CGPath(ellipseIn: ellipseRect, transform: nil)
+            body = SKPhysicsBody(polygonFrom: path)
+        } else {
+            body = SKPhysicsBody(circleOfRadius: size.width / 2)
+        }
+
         body.isDynamic = true
         body.categoryBitMask = CollisionCategory.fruit
         body.collisionBitMask = CollisionCategory.fruit | CollisionCategory.wall | CollisionCategory.floor
@@ -84,8 +102,8 @@ public final class FruitNode: SKNode {
 
     // MARK: - Texture Generation & Asset Fallback
 
-    public static func texture(for fruitType: FruitType, diameter: CGFloat) -> SKTexture {
-        let cacheKey = "\(fruitType.rawValue)_\(Int(diameter * 10))"
+    public static func texture(for fruitType: FruitType, size: CGSize) -> SKTexture {
+        let cacheKey = "\(fruitType.rawValue)_\(Int(size.width * 10))_\(Int(size.height * 10))"
         if let cached = textureCache[cacheKey] {
             return cached
         }
@@ -97,14 +115,14 @@ public final class FruitNode: SKNode {
             return texture
         }
 
-        // 2. Procedural high-resolution standalone artwork (transparent background, 10% safety margin)
+        // 2. Procedural high-resolution standalone artwork (transparent background)
         let scale = UIScreen.main.scale
-        let size = CGSize(width: diameter * scale, height: diameter * scale)
-        let renderer = UIGraphicsImageRenderer(size: size)
+        let renderSize = CGSize(width: size.width * scale, height: size.height * scale)
+        let renderer = UIGraphicsImageRenderer(size: renderSize)
 
         let renderedImage = renderer.image { context in
             let cgContext = context.cgContext
-            let rect = CGRect(origin: .zero, size: size)
+            let rect = CGRect(origin: .zero, size: renderSize)
 
             switch fruitType {
             case .redCurrant:
