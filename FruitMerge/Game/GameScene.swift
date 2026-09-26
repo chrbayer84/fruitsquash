@@ -268,6 +268,15 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
             y += (34 * scaleFactor)
         }
 
+        // Temporary debug: spawn a pineapple directly on board start for inspection
+        let debugPineapple = FruitNode(fruitType: .pineapple, scale: scaleFactor)
+        debugPineapple.position = CGPoint(
+            x: containerOriginX + containerWidth * 0.5,
+            y: containerBottomY + targetFillHeight + (debugPineapple.effectiveSize.height * 0.5) + 10
+        )
+        debugPineapple.physicsBody?.isDynamic = true
+        fruitLayer.addChild(debugPineapple)
+
         // Complete initial settling after 1.2s and enforce 0 start points
         removeAction(forKey: "initialSettling")
         let settleAction = SKAction.sequence([
