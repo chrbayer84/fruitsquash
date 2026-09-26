@@ -84,20 +84,16 @@ public struct HUDView: View {
                     .foregroundColor(gameState.canUseUpgrade ? .white : .white.opacity(0.4))
                     .padding(.horizontal, 4)
                     .frame(height: 25)
-                    .background(
-                        gameState.isUpgradeModeActive
-                            ? AnyView(LinearGradient(colors: [.green, .mint], startPoint: .top, endPoint: .bottom))
-                            : AnyView(gameState.canUseUpgrade ? LinearGradient(colors: [Color(red: 0.18, green: 0.58, blue: 0.35), Color(red: 0.12, green: 0.42, blue: 0.25)], startPoint: .top, endPoint: .bottom) : LinearGradient(colors: [Color(red: 0.14, green: 0.20, blue: 0.16), Color(red: 0.10, green: 0.14, blue: 0.12)], startPoint: .top, endPoint: .bottom))
-                    )
+                    .background(upgradeButtonBackground(isPortrait: true))
                     .cornerRadius(6)
                     .overlay(
                         RoundedRectangle(cornerRadius: 6)
-                            .stroke(gameState.isUpgradeModeActive ? Color.yellow : (gameState.canUseUpgrade ? Color.green.opacity(0.4) : Color.white.opacity(0.08)), lineWidth: 1.5)
+                            .stroke(upgradeButtonBorder, lineWidth: 1.5)
                     )
                 }
                 .disabled(!gameState.canUseUpgrade && !gameState.isUpgradeModeActive)
 
-                // Bomb Tool Button
+                // Bomb Tool Button (Requires 1000 pts, deducts 1000 on click)
                 Button(action: {
                     HapticManager.shared.buttonTapFeedback(enabled: gameState.isHapticsEnabled)
                     gameState.toggleBombMode()
@@ -111,15 +107,11 @@ public struct HUDView: View {
                     .foregroundColor(gameState.canUseBomb ? .white : .white.opacity(0.4))
                     .padding(.horizontal, 4)
                     .frame(height: 25)
-                    .background(
-                        gameState.isBombModeActive
-                            ? AnyView(LinearGradient(colors: [.red, .orange], startPoint: .top, endPoint: .bottom))
-                            : AnyView(gameState.canUseBomb ? Color(red: 0.85, green: 0.20, blue: 0.20) : Color(red: 0.16, green: 0.18, blue: 0.24))
-                    )
+                    .background(bombButtonBackground(isPortrait: true))
                     .cornerRadius(6)
                     .overlay(
                         RoundedRectangle(cornerRadius: 6)
-                            .stroke(gameState.isBombModeActive ? Color.yellow : (gameState.canUseBomb ? Color.red.opacity(0.4) : Color.white.opacity(0.08)), lineWidth: 1.5)
+                            .stroke(bombButtonBorder, lineWidth: 1.5)
                     )
                 }
                 .disabled(!gameState.canUseBomb && !gameState.isBombModeActive)
@@ -303,17 +295,11 @@ public struct HUDView: View {
                 }
                 .foregroundColor(gameState.canUseUpgrade ? .white : .white.opacity(0.4))
                 .frame(maxWidth: .infinity, minHeight: 30)
-                .background(
-                    gameState.isUpgradeModeActive
-                        ? AnyView(LinearGradient(colors: [.green, .mint], startPoint: .leading, endPoint: .trailing))
-                        : AnyView(gameState.canUseUpgrade
-                            ? LinearGradient(colors: [Color(red: 0.18, green: 0.62, blue: 0.38), Color(red: 0.10, green: 0.45, blue: 0.28)], startPoint: .leading, endPoint: .trailing)
-                            : LinearGradient(colors: [Color(red: 0.14, green: 0.20, blue: 0.16), Color(red: 0.10, green: 0.14, blue: 0.12)], startPoint: .leading, endPoint: .trailing))
-                )
+                .background(upgradeButtonBackground(isPortrait: false))
                 .cornerRadius(8)
                 .overlay(
                     RoundedRectangle(cornerRadius: 8)
-                        .stroke(gameState.isUpgradeModeActive ? Color.yellow : (gameState.canUseUpgrade ? Color.green.opacity(0.4) : Color.white.opacity(0.08)), lineWidth: 1.5)
+                        .stroke(upgradeButtonBorder, lineWidth: 1.5)
                 )
                 .shadow(color: gameState.canUseUpgrade ? Color.green.opacity(0.30) : Color.clear, radius: 3, y: 2)
             }
@@ -332,19 +318,13 @@ public struct HUDView: View {
                 }
                 .foregroundColor(gameState.canUseBomb ? .white : .white.opacity(0.4))
                 .frame(maxWidth: .infinity, minHeight: 30)
-                .background(
-                    gameState.isBombModeActive
-                        ? AnyView(LinearGradient(colors: [.red, .orange], startPoint: .leading, endPoint: .trailing))
-                        : AnyView(gameState.canUseBomb
-                            ? LinearGradient(colors: [Color(red: 0.85, green: 0.20, blue: 0.20), Color(red: 0.60, green: 0.08, blue: 0.08)], startPoint: .leading, endPoint: .trailing)
-                            : LinearGradient(colors: [Color(red: 0.16, green: 0.18, blue: 0.24), Color(red: 0.12, green: 0.14, blue: 0.20)], startPoint: .leading, endPoint: .trailing))
-                )
+                .background(bombButtonBackground(isPortrait: false))
                 .cornerRadius(8)
                 .overlay(
                     RoundedRectangle(cornerRadius: 8)
-                        .stroke(gameState.isBombModeActive ? Color.yellow : (gameState.canUseBomb ? Color.red.opacity(0.4) : Color.white.opacity(0.08)), lineWidth: 1.5)
+                        .stroke(bombButtonBorder, lineWidth: 1.5)
                 )
-                .shadow(color: gameState.canUseBomb ? Color.red.opacity(0.30), radius: 3, y: 2)
+                .shadow(color: gameState.canUseBomb ? Color.red.opacity(0.30) : Color.clear, radius: 3, y: 2)
             }
             .disabled(!gameState.canUseBomb && !gameState.isBombModeActive)
 
@@ -428,6 +408,50 @@ public struct HUDView: View {
         )
         .padding(.leading, 5)
         .padding(.vertical, 5)
+    }
+
+    // MARK: - Button Styling Helpers
+
+    @ViewBuilder
+    private func upgradeButtonBackground(isPortrait: Bool) -> some View {
+        if gameState.isUpgradeModeActive {
+            LinearGradient(colors: [.green, .mint], startPoint: isPortrait ? .top : .leading, endPoint: isPortrait ? .bottom : .trailing)
+        } else if gameState.canUseUpgrade {
+            LinearGradient(colors: [Color(red: 0.18, green: 0.62, blue: 0.38), Color(red: 0.10, green: 0.45, blue: 0.28)], startPoint: isPortrait ? .top : .leading, endPoint: isPortrait ? .bottom : .trailing)
+        } else {
+            LinearGradient(colors: [Color(red: 0.14, green: 0.20, blue: 0.16), Color(red: 0.10, green: 0.14, blue: 0.12)], startPoint: isPortrait ? .top : .leading, endPoint: isPortrait ? .bottom : .trailing)
+        }
+    }
+
+    @ViewBuilder
+    private func bombButtonBackground(isPortrait: Bool) -> some View {
+        if gameState.isBombModeActive {
+            LinearGradient(colors: [.red, .orange], startPoint: isPortrait ? .top : .leading, endPoint: isPortrait ? .bottom : .trailing)
+        } else if gameState.canUseBomb {
+            LinearGradient(colors: [Color(red: 0.85, green: 0.20, blue: 0.20), Color(red: 0.60, green: 0.08, blue: 0.08)], startPoint: isPortrait ? .top : .leading, endPoint: isPortrait ? .bottom : .trailing)
+        } else {
+            LinearGradient(colors: [Color(red: 0.16, green: 0.18, blue: 0.24), Color(red: 0.12, green: 0.14, blue: 0.20)], startPoint: isPortrait ? .top : .leading, endPoint: isPortrait ? .bottom : .trailing)
+        }
+    }
+
+    private var upgradeButtonBorder: Color {
+        if gameState.isUpgradeModeActive {
+            return .yellow
+        } else if gameState.canUseUpgrade {
+            return Color.green.opacity(0.4)
+        } else {
+            return Color.white.opacity(0.08)
+        }
+    }
+
+    private var bombButtonBorder: Color {
+        if gameState.isBombModeActive {
+            return .yellow
+        } else if gameState.canUseBomb {
+            return Color.red.opacity(0.4)
+        } else {
+            return Color.white.opacity(0.08)
+        }
     }
 }
 
