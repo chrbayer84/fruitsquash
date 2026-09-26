@@ -297,16 +297,18 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
         containerNode.removeAllChildren()
 
         if isPortrait {
-            let topPadding = hudOffset + 12
+            // Portrait Layout: Center box vertically in the available area below the top HUD
+            let topPadding = hudOffset + 16
             let availableWidth = max(240, size.width - 36)
-            let availableHeight = max(240, size.height - topPadding - 36)
-            let baseSize = min(availableWidth, availableHeight)
+            let availableAreaHeight = max(240, size.height - topPadding)
+            let baseSize = min(availableWidth, availableAreaHeight - 36)
             let boxSize = baseSize * 0.75
 
             containerWidth = boxSize
             containerHeight = boxSize
             containerOriginX = (size.width - boxSize) / 2
-            containerBottomY = 28
+            // Vertically centered in the available height below the top HUD
+            containerBottomY = (availableAreaHeight - boxSize) / 2
             dropZoneY = containerBottomY + containerHeight + 22
             dangerLineY = containerBottomY + containerHeight - 12
         } else {
