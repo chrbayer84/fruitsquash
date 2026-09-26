@@ -90,6 +90,25 @@ public final class FruitNode: SKNode {
         sprite.zPosition = 10
         addChild(sprite)
         self.spriteNode = sprite
+
+        // Debug outline for pineapple physics collision boundary
+        if fruitType == .pineapple {
+            let physicsWidth = size.width * 0.80
+            let physicsHeight = size.height * 0.80
+            let ellipseRect = CGRect(
+                x: -physicsWidth / 2,
+                y: -physicsHeight / 2,
+                width: physicsWidth,
+                height: physicsHeight
+            )
+            let debugOutline = SKShapeNode(ellipseIn: ellipseRect)
+            debugOutline.name = "pineappleDebugOutline"
+            debugOutline.strokeColor = SKColor.systemYellow
+            debugOutline.lineWidth = 2.0
+            debugOutline.fillColor = SKColor.yellow.withAlphaComponent(0.18)
+            debugOutline.zPosition = 15
+            addChild(debugOutline)
+        }
     }
 
     private func setupPhysics() {
