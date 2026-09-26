@@ -10,8 +10,43 @@ public final class FruitNode: SKNode {
 
     private var spriteNode: SKSpriteNode?
 
-    // Static texture cache for instant rendering performance
+    // Static texture and UIImage cache for instant rendering performance
     private static var textureCache: [String: SKTexture] = [:]
+    private static var uiImageCache: [FruitType: UIImage] = [:]
+
+    public static func uiImage(for fruitType: FruitType) -> UIImage {
+        if let cached = uiImageCache[fruitType] {
+            return cached
+        }
+
+        if let customImage = UIImage(named: fruitType.assetName) {
+            uiImageCache[fruitType] = customImage
+            return customImage
+        }
+
+        let renderSize = CGSize(width: 128, height: 128)
+        let renderer = UIGraphicsImageRenderer(size: renderSize)
+        let image = renderer.image { context in
+            let cgContext = context.cgContext
+            let rect = CGRect(origin: .zero, size: renderSize)
+
+            switch fruitType {
+            case .redCurrant:
+                drawSingleRedCurrant(in: rect, context: cgContext)
+            case .blueberry:
+                drawSingleBlueberry(in: rect, context: cgContext)
+            case .purpleGrapeBunch:
+                drawRoundGrapeBunch(in: rect, context: cgContext)
+            case .dragonfruit:
+                drawWholeDragonfruit(in: rect, context: cgContext)
+            default:
+                drawEmojiArtwork(emoji: fruitType.emoji, in: rect, context: cgContext)
+            }
+        }
+
+        uiImageCache[fruitType] = image
+        return image
+    }
 
     public init(fruitType: FruitType, scale: CGFloat = 1.0) {
         self.fruitType = fruitType
@@ -50,8 +85,32 @@ public final class FruitNode: SKNode {
         let size = effectiveSize
         let body: SKPhysicsBody
 
-        if fruitType == .dragonfruit || fruitType == .pineapple || fruitType == .watermelon {
-            // Elliptical rigid body matching natural oblong fruit/slice profile
+        if fruitType == .dragonfruit {
+            // Invisible physics shape is 10% smaller to let surrounding fruits get closer to scales and margins
+            let physicsWidth = size.width * 0.90
+            let physicsHeight = size.height * 0.90
+            let ellipseRect = CGRect(
+                x: -physicsWidth / 2,
+                y: -physicsHeight / 2,
+                width: physicsWidth,
+                height: physicsHeight
+            )
+            let path = CGPath(ellipseIn: ellipseRect, transform: nil)
+            body = SKPhysicsBody(polygonFrom: path)
+        } else if fruitType == .pineapple {
+            // Invisible physics shape is 20% smaller to snuggly fit crown leaves and body
+            let physicsWidth = size.width * 0.80
+            let physicsHeight = size.height * 0.80
+            let ellipseRect = CGRect(
+                x: -physicsWidth / 2,
+                y: -physicsHeight / 2,
+                width: physicsWidth,
+                height: physicsHeight
+            )
+            let path = CGPath(ellipseIn: ellipseRect, transform: nil)
+            body = SKPhysicsBody(polygonFrom: path)
+        } else if fruitType == .watermelon {
+            // Elliptical rigid body matching natural oblong watermelon slice profile
             let ellipseRect = CGRect(
                 x: -size.width / 2,
                 y: -size.height / 2,

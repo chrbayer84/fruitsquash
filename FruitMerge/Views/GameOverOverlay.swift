@@ -70,11 +70,18 @@ public struct GameOverOverlay: View {
                     Divider().background(Color.white.opacity(0.12))
                     StatRow(title: "Total Merges", value: "\(gameState.mergeCount)", valueColor: .white)
                     Divider().background(Color.white.opacity(0.12))
-                    StatRow(
-                        title: "Best Fruit",
-                        value: "\(gameState.maxFruitTierAchieved.emoji) \(gameState.maxFruitTierAchieved.displayName)",
-                        valueColor: .white
-                    )
+                    HStack {
+                        Text("Best Fruit")
+                            .font(.system(size: 13, weight: .medium, design: .rounded))
+                            .foregroundColor(.white.opacity(0.7))
+                        Spacer()
+                        HStack(spacing: 4) {
+                            FruitIconView(fruitType: gameState.maxFruitTierAchieved, size: 18)
+                            Text(gameState.maxFruitTierAchieved.displayName)
+                                .font(.system(size: 13, weight: .bold, design: .rounded))
+                                .foregroundColor(.white)
+                        }
+                    }
                 }
                 .padding(14)
                 .frame(width: 220)

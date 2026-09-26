@@ -1,5 +1,22 @@
 import SwiftUI
 
+public struct FruitIconView: View {
+    public let fruitType: FruitType
+    public var size: CGFloat = 20
+
+    public init(fruitType: FruitType, size: CGFloat = 20) {
+        self.fruitType = fruitType
+        self.size = size
+    }
+
+    public var body: some View {
+        Image(uiImage: FruitNode.uiImage(for: fruitType))
+            .resizable()
+            .aspectRatio(contentMode: .fit)
+            .frame(width: size, height: size)
+    }
+}
+
 public struct HUDView: View {
     @ObservedObject var gameState: GameState
     var isPortrait: Bool = false
@@ -35,13 +52,12 @@ public struct HUDView: View {
                 ScoreCard(title: "SCORE", value: "\(gameState.score)", color: .orange)
                 ScoreCard(title: "BEST", value: "\(gameState.highScore)", color: .yellow)
 
-                // Next Fruit preview
+                // Next Fruit preview (using exact game fruit picture)
                 HStack(spacing: 4) {
                     Text("NEXT")
                         .font(.system(size: 8, weight: .black, design: .rounded))
                         .foregroundColor(.white.opacity(0.6))
-                    Text(gameState.nextFruit.emoji)
-                        .font(.system(size: 17))
+                    FruitIconView(fruitType: gameState.nextFruit, size: 22)
                 }
                 .padding(.horizontal, 6)
                 .padding(.vertical, 4)
@@ -125,7 +141,7 @@ public struct HUDView: View {
                 }
             }
 
-            // Bottom 2-Line Evolution Strip
+            // Bottom 2-Line Evolution Strip (Using exact game fruit pictures)
             EvolutionTwoLinesView()
         }
         .padding(.horizontal, 8)
@@ -163,7 +179,7 @@ public struct HUDView: View {
                 ScoreCard(title: "BEST", value: "\(gameState.highScore)", color: .yellow)
             }
 
-            // Next Fruit Preview Card
+            // Next Fruit Preview Card (Using exact game fruit picture)
             HStack(spacing: 8) {
                 VStack(alignment: .leading, spacing: 1) {
                     Text("NEXT")
@@ -177,9 +193,7 @@ public struct HUDView: View {
 
                 Spacer()
 
-                Text(gameState.nextFruit.emoji)
-                    .font(.system(size: 24))
-                    .frame(width: 32, height: 32)
+                FruitIconView(fruitType: gameState.nextFruit, size: 30)
             }
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
@@ -192,7 +206,7 @@ public struct HUDView: View {
                 )
             )
 
-            // Evolution / Merge Chain Guide (Split into 2 lines, full width)
+            // Evolution / Merge Chain Guide (Split into 2 lines, full width, using exact fruit pictures)
             VStack(alignment: .leading, spacing: 4) {
                 Text("MERGE EVOLUTION")
                     .font(.system(size: 8.5, weight: .black, design: .rounded))
@@ -331,11 +345,10 @@ private struct EvolutionTwoLinesView: View {
 
     var body: some View {
         VStack(spacing: 5) {
-            // Row 1 (Scaled to full width)
+            // Row 1 (Scaled to full width using exact fruit pictures)
             HStack(spacing: 0) {
                 ForEach(0..<row1.count, id: \.self) { idx in
-                    Text(row1[idx].emoji)
-                        .font(.system(size: 15))
+                    FruitIconView(fruitType: row1[idx], size: 18)
                     if idx < row1.count - 1 {
                         Spacer(minLength: 1)
                         Image(systemName: "arrow.right")
@@ -347,11 +360,10 @@ private struct EvolutionTwoLinesView: View {
             }
             .frame(maxWidth: .infinity)
 
-            // Row 2 (Scaled to full width)
+            // Row 2 (Scaled to full width using exact fruit pictures)
             HStack(spacing: 0) {
                 ForEach(0..<row2.count, id: \.self) { idx in
-                    Text(row2[idx].emoji)
-                        .font(.system(size: 15))
+                    FruitIconView(fruitType: row2[idx], size: 18)
                     if idx < row2.count - 1 {
                         Spacer(minLength: 1)
                         Image(systemName: "arrow.right")
