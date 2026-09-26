@@ -36,6 +36,7 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
     private var canDrop: Bool = true
     private var isAiming: Bool = false
     public var isRotating: Bool = false
+    private var isInitialSettling: Bool = false
     private var currentAimX: CGFloat = 0
     private var lastUpdateTime: TimeInterval = 0
     private var lastShakeTimestamp: TimeInterval = 0
@@ -55,19 +56,25 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
     }
 
     private func setupLayers() {
-        removeAllChildren()
-
-        containerNode.zPosition = 1
-        addChild(containerNode)
-
-        fruitLayer.zPosition = 10
-        addChild(fruitLayer)
-
-        effectLayer.zPosition = 20
-        addChild(effectLayer)
-
-        fireworksLayer.zPosition = 30
-        addChild(fireworksLayer)
+        if containerNode.parent == nil {
+            containerNode.zPosition = 1
+            addChild(containerNode)
+        }
+        if fruitLayer.parent == nil {
+            fruitLayer.zPosition = 10
+            addChild(fruitLayer)
+        }
+        if effectLayer.parent == nil {
+            effectLayer.zPosition = 20
+            addChild(effectLayer)
+        }
+        if fireworksLayer.parent == nil {
+            fireworksLayer.zPosition = 30
+            addChild(fireworksLayer)
+        }
+        if dropGuideLine.parent == nil {
+            addChild(dropGuideLine)
+        }
     }
 
     private func setupCrosshair() {
@@ -106,7 +113,9 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
 
         crosshairNode.zPosition = 40
         crosshairNode.isHidden = true
-        effectLayer.addChild(crosshairNode)
+        if crosshairNode.parent == nil {
+            effectLayer.addChild(crosshairNode)
+        }
     }
 
     public func updateLayout(size: CGSize, isPortrait: Bool, hudOffset: CGFloat) {
@@ -185,6 +194,9 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
     /// Pre-fills ~1/4 of the square box with a varied mix of fruit tiers (Red Currant up to Apple)
     public func prefillBox() {
         fruitLayer.removeAllChildren()
+        isInitialSettling = true
+        gameState?.score = 0
+        gameState?.mergeCount = 0
 
         let allowedTiers: [FruitType] = [
             .redCurrant, .blueberry, .lemon, .purpleGrapeBunch, .orange, .apple
@@ -227,6 +239,19 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
             lastRowTiers = currentRowTiers
             y += (34 * scaleFactor)
         }
+
+        // Complete initial settling after 1.2s and enforce 0 start points
+        removeAction(forKey: "initialSettling")
+        let settleAction = SKAction.sequence([
+            SKAction.wait(forDuration: 1.2),
+            SKAction.run { [weak self] in
+                guard let self = self else { return }
+                self.isInitialSettling = false
+                self.gameState?.score = 0
+                self.gameState?.mergeCount = 0
+            }
+        ])
+        run(settleAction, withKey: "initialSettling")
     }
 
     /// Shakes the board: applies random physical impulses to all fruits and shakes the scene visually
@@ -355,6 +380,9 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
     }
 
     private func setupDangerLine() {
+        dangerLineNode.removeFromParent()
+        dangerLineNode.removeAllActions()
+
         let path = CGMutablePath()
         path.move(to: CGPoint(x: containerOriginX + 8, y: dangerLineY))
         path.addLine(to: CGPoint(x: containerOriginX + containerWidth - 8, y: dangerLineY))
@@ -376,7 +404,9 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
         dropGuideLine.lineWidth = 1.5
         dropGuideLine.zPosition = 9
         dropGuideLine.isHidden = true
-        addChild(dropGuideLine)
+        if dropGuideLine.parent == nil {
+            addChild(dropGuideLine)
+        }
     }
 
     private func prepareDropFruit() {
@@ -567,7 +597,7 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
         fruit.removeFromParent()
 
         // 5. Sound & Haptics
-        AudioManager.shared.playGameOverSound(isMuted: state.isMuted)
+        AudioManager.shared.playBombKlaxonSound(isMuted: state.isMuted)
         HapticManager.shared.gameOverFeedback(enabled: state.isHapticsEnabled)
 
         // 6. Deactivate Bomb Mode and re-enable preview
@@ -655,7 +685,10 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
             newFruit.playSpawnAnimation()
 
             spawnMergeParticles(at: point, color: nextTier.skPrimaryColor, count: 16)
-            state.recordMerge(resultFruit: nextTier)
+
+            if !isInitialSettling {
+                state.recordMerge(resultFruit: nextTier)
+            }
 
             AudioManager.shared.playMergeSound(for: nextTier, isMuted: state.isMuted)
             HapticManager.shared.mergeFeedback(tier: nextTier, enabled: state.isHapticsEnabled)

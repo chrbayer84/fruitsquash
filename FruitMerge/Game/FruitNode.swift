@@ -33,8 +33,8 @@ public final class FruitNode: SKNode {
 
     private func setupVisuals() {
         let physicalDiameter = effectiveRadius * 2
-        // 10% transparent margin around the fruit so physics bounds touch with a clean visual buffer
-        let visualDiameter = physicalDiameter * 0.90
+        // 5% transparent margin around the fruit so physics bounds touch with a clean visual buffer
+        let visualDiameter = physicalDiameter * 0.95
         let texture = FruitNode.texture(for: fruitType, diameter: visualDiameter)
 
         let sprite = SKSpriteNode(texture: texture)
@@ -374,26 +374,55 @@ public final class FruitNode: SKNode {
             context.fillEllipse(in: specular)
         }
 
-        // Top stem and vine leaf
-        context.setFillColor(UIColor(red: 0.35, green: 0.68, blue: 0.15, alpha: 1.0).cgColor)
-        let leafRect = CGRect(
-            x: rect.midX - rect.width * 0.15,
-            y: rect.minY + rect.height * 0.02,
-            width: rect.width * 0.30,
-            height: rect.height * 0.16
-        )
-        context.fillEllipse(in: leafRect)
-
+        // Top stem (woody brown twig)
         context.setFillColor(UIColor(red: 0.45, green: 0.28, blue: 0.12, alpha: 1.0).cgColor)
-        let stemRect = CGRect(
-            x: rect.midX - rect.width * 0.04,
-            y: rect.minY,
-            width: rect.width * 0.08,
-            height: rect.height * 0.12
+        let stemPath = CGMutablePath()
+        stemPath.move(to: CGPoint(x: rect.midX - rect.width * 0.03, y: rect.minY + rect.height * 0.10))
+        stemPath.addQuadCurve(
+            to: CGPoint(x: rect.midX + rect.width * 0.02, y: rect.minY),
+            control: CGPoint(x: rect.midX - rect.width * 0.01, y: rect.minY + rect.height * 0.03)
         )
-        let stemPath = CGPath(roundedRect: stemRect, cornerWidth: 2, cornerHeight: 2, transform: nil)
+        stemPath.addLine(to: CGPoint(x: rect.midX + rect.width * 0.06, y: rect.minY + rect.height * 0.01))
+        stemPath.addQuadCurve(
+            to: CGPoint(x: rect.midX + rect.width * 0.01, y: rect.minY + rect.height * 0.10),
+            control: CGPoint(x: rect.midX + rect.width * 0.03, y: rect.minY + rect.height * 0.04)
+        )
+        stemPath.closeSubpath()
         context.addPath(stemPath)
         context.fillPath()
+
+        // Proper lobed grape vine leaf branching naturally to the left
+        let leafPath = CGMutablePath()
+        let leafBase = CGPoint(x: rect.midX - rect.width * 0.02, y: rect.minY + rect.height * 0.06)
+        leafPath.move(to: leafBase)
+
+        // Left lower lobe
+        leafPath.addQuadCurve(to: CGPoint(x: rect.midX - rect.width * 0.18, y: rect.minY + rect.height * 0.08), control: CGPoint(x: rect.midX - rect.width * 0.12, y: rect.minY + rect.height * 0.12))
+        // Left sinus
+        leafPath.addQuadCurve(to: CGPoint(x: rect.midX - rect.width * 0.14, y: rect.minY + rect.height * 0.03), control: CGPoint(x: rect.midX - rect.width * 0.16, y: rect.minY + rect.height * 0.05))
+        // Center main pointed tip
+        leafPath.addQuadCurve(to: CGPoint(x: rect.midX - rect.width * 0.22, y: rect.minY), control: CGPoint(x: rect.midX - rect.width * 0.20, y: rect.minY + rect.height * 0.01))
+        // Top sinus
+        leafPath.addQuadCurve(to: CGPoint(x: rect.midX - rect.width * 0.10, y: rect.minY + rect.height * 0.01), control: CGPoint(x: rect.midX - rect.width * 0.16, y: rect.minY + rect.height * 0.005))
+        // Right upper lobe
+        leafPath.addQuadCurve(to: CGPoint(x: rect.midX - rect.width * 0.08, y: rect.minY + rect.height * 0.03), control: CGPoint(x: rect.midX - rect.width * 0.07, y: rect.minY + rect.height * 0.015))
+        // Back to base
+        leafPath.addQuadCurve(to: leafBase, control: CGPoint(x: rect.midX - rect.width * 0.04, y: rect.minY + rect.height * 0.04))
+        leafPath.closeSubpath()
+
+        // Leaf fill
+        context.setFillColor(UIColor(red: 0.25, green: 0.65, blue: 0.18, alpha: 1.0).cgColor)
+        context.addPath(leafPath)
+        context.fillPath()
+
+        // Leaf vein details
+        context.setStrokeColor(UIColor(red: 0.15, green: 0.45, blue: 0.10, alpha: 0.8).cgColor)
+        context.setLineWidth(rect.width * 0.012)
+        context.move(to: leafBase)
+        context.addLine(to: CGPoint(x: rect.midX - rect.width * 0.22, y: rect.minY))
+        context.move(to: CGPoint(x: rect.midX - rect.width * 0.08, y: rect.minY + rect.height * 0.04))
+        context.addLine(to: CGPoint(x: rect.midX - rect.width * 0.18, y: rect.minY + rect.height * 0.08))
+        context.strokePath()
     }
 
     /// Draws a whole dragonfruit (pitaya) with vibrant pink body and green-tipped scales

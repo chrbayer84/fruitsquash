@@ -90,9 +90,21 @@ public final class GameState: ObservableObject {
         phase = .playing
     }
 
+    public let bombCost: Int = 1000
+
+    public var canUseBomb: Bool {
+        score >= bombCost || isBombModeActive
+    }
+
     public func toggleBombMode() {
         guard phase == .playing else { return }
-        isBombModeActive.toggle()
+        if isBombModeActive {
+            isBombModeActive = false
+        } else {
+            guard score >= bombCost else { return }
+            score -= bombCost
+            isBombModeActive = true
+        }
     }
 
     public func deactivateBombMode() {

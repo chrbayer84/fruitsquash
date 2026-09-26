@@ -36,6 +36,15 @@ public final class AudioManager {
         }
     }
 
+    public func playBombKlaxonSound(isMuted: Bool) {
+        guard !isMuted else { return }
+        // Klaxon / Siren alarm sound (sound ID 1005 or 1033)
+        AudioServicesPlaySystemSound(1005)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+            AudioServicesPlaySystemSound(1073) // Explosion boom
+        }
+    }
+
     public func playGameOverSound(isMuted: Bool) {
         guard !isMuted else { return }
         AudioServicesPlaySystemSound(1073)

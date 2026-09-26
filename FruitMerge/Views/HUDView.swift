@@ -50,26 +50,32 @@ public struct HUDView: View {
                         .fill(Color(red: 0.14, green: 0.16, blue: 0.24))
                 )
 
-                // Bomb Tool Button
+                // Bomb Tool Button (requires 1000 points, deducts 1000 on click)
                 Button(action: {
                     HapticManager.shared.buttonTapFeedback(enabled: gameState.isHapticsEnabled)
                     gameState.toggleBombMode()
                 }) {
-                    Image(systemName: "bomb.fill")
-                        .font(.system(size: 11, weight: .black))
-                        .foregroundColor(.white)
-                        .frame(width: 28, height: 28)
-                        .background(
-                            gameState.isBombModeActive
-                                ? AnyView(LinearGradient(colors: [.red, .orange], startPoint: .top, endPoint: .bottom))
-                                : AnyView(Color(red: 0.20, green: 0.12, blue: 0.16))
-                        )
-                        .cornerRadius(7)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 7)
-                                .stroke(gameState.isBombModeActive ? Color.yellow : Color.clear, lineWidth: 1.5)
-                        )
+                    HStack(spacing: 3) {
+                        Image(systemName: "bomb.fill")
+                            .font(.system(size: 10, weight: .black))
+                        Text(gameState.isBombModeActive ? "ACTIVE" : "1K")
+                            .font(.system(size: 8, weight: .black, design: .rounded))
+                    }
+                    .foregroundColor(gameState.canUseBomb ? .white : .white.opacity(0.4))
+                    .padding(.horizontal, 6)
+                    .frame(height: 28)
+                    .background(
+                        gameState.isBombModeActive
+                            ? AnyView(LinearGradient(colors: [.red, .orange], startPoint: .top, endPoint: .bottom))
+                            : AnyView(gameState.canUseBomb ? Color(red: 0.85, green: 0.20, blue: 0.20) : Color(red: 0.16, green: 0.18, blue: 0.24))
+                    )
+                    .cornerRadius(7)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 7)
+                            .stroke(gameState.isBombModeActive ? Color.yellow : (gameState.canUseBomb ? Color.red.opacity(0.4) : Color.white.opacity(0.08)), lineWidth: 1.5)
+                    )
                 }
+                .disabled(!gameState.canUseBomb && !gameState.isBombModeActive)
 
                 // Shake Board Button
                 Button(action: onShake) {
@@ -202,7 +208,7 @@ public struct HUDView: View {
 
             Spacer()
 
-            // Bomb Power-Up Button (Above Shake Button)
+            // Bomb Power-Up Button (Requires 1000 pts, deducts 1000 on click)
             Button(action: {
                 HapticManager.shared.buttonTapFeedback(enabled: gameState.isHapticsEnabled)
                 gameState.toggleBombMode()
@@ -210,23 +216,26 @@ public struct HUDView: View {
                 HStack(spacing: 6) {
                     Image(systemName: "bomb.fill")
                         .font(.system(size: 13, weight: .black))
-                    Text(gameState.isBombModeActive ? "SELECT FRUIT" : "BOMB")
-                        .font(.system(size: 11, weight: .heavy, design: .rounded))
+                    Text(gameState.isBombModeActive ? "SELECT FRUIT" : "BOMB (1000 PTS)")
+                        .font(.system(size: 10, weight: .heavy, design: .rounded))
                 }
-                .foregroundColor(.white)
+                .foregroundColor(gameState.canUseBomb ? .white : .white.opacity(0.4))
                 .frame(maxWidth: .infinity, minHeight: 32)
                 .background(
                     gameState.isBombModeActive
                         ? AnyView(LinearGradient(colors: [.red, .orange], startPoint: .leading, endPoint: .trailing))
-                        : AnyView(LinearGradient(colors: [Color(red: 0.85, green: 0.20, blue: 0.20), Color(red: 0.60, green: 0.08, blue: 0.08)], startPoint: .leading, endPoint: .trailing))
+                        : AnyView(gameState.canUseBomb
+                            ? LinearGradient(colors: [Color(red: 0.85, green: 0.20, blue: 0.20), Color(red: 0.60, green: 0.08, blue: 0.08)], startPoint: .leading, endPoint: .trailing)
+                            : LinearGradient(colors: [Color(red: 0.16, green: 0.18, blue: 0.24), Color(red: 0.12, green: 0.14, blue: 0.20)], startPoint: .leading, endPoint: .trailing))
                 )
                 .cornerRadius(9)
                 .overlay(
                     RoundedRectangle(cornerRadius: 9)
-                        .stroke(gameState.isBombModeActive ? Color.yellow : Color.clear, lineWidth: 1.5)
+                        .stroke(gameState.isBombModeActive ? Color.yellow : (gameState.canUseBomb ? Color.red.opacity(0.4) : Color.white.opacity(0.08)), lineWidth: 1.5)
                 )
-                .shadow(color: Color.red.opacity(0.35), radius: 4, y: 2)
+                .shadow(color: gameState.canUseBomb ? Color.red.opacity(0.35) : Color.clear, radius: 4, y: 2)
             }
+            .disabled(!gameState.canUseBomb && !gameState.isBombModeActive)
 
             // Shake Board Action Button
             Button(action: onShake) {
