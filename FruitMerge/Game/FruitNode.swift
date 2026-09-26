@@ -74,10 +74,19 @@ public final class FruitNode: SKNode {
 
     private func setupVisuals() {
         let size = effectiveSize
-        let texture = FruitNode.texture(for: fruitType, size: size)
+        let visualSize: CGSize
+
+        if fruitType == .pineapple {
+            // Visual picture scaled 60% bigger while keeping physics boundary unchanged
+            visualSize = CGSize(width: size.width * 1.60, height: size.height * 1.60)
+        } else {
+            visualSize = size
+        }
+
+        let texture = FruitNode.texture(for: fruitType, size: visualSize)
 
         let sprite = SKSpriteNode(texture: texture)
-        sprite.size = size
+        sprite.size = visualSize
         sprite.zPosition = 10
         addChild(sprite)
         self.spriteNode = sprite
