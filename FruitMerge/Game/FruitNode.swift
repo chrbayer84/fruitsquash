@@ -133,6 +133,9 @@ public final class FruitNode: SKNode {
             )
             let path = CGPath(ellipseIn: ellipseRect, transform: nil)
             body = SKPhysicsBody(polygonFrom: path)
+        } else {
+            // Standard circular body for watermelon and all round fruits
+            body = SKPhysicsBody(circleOfRadius: size.width / 2)
         }
 
         body.isDynamic = true
