@@ -64,13 +64,13 @@ public enum FruitType: Int, CaseIterable, Identifiable, Comparable {
         case .apple: return "🍎"
         case .peach: return "🍑"
         case .coconut: return "🥥"
-        case .dragonfruit: return "🌺"
+        case .dragonfruit: return "🐉"
         case .pineapple: return "🍍"
         case .watermelon: return "🍉"
         }
     }
 
-    /// Base radius in points for SpriteKit physics and visual bounds
+    /// Base radius in points for SpriteKit physics and visual bounds (Portrait base)
     public var radius: CGFloat {
         switch self {
         case .redCurrant: return 13.2
@@ -85,6 +85,11 @@ public enum FruitType: Int, CaseIterable, Identifiable, Comparable {
         case .pineapple: return 102.3
         case .watermelon: return 118.8
         }
+    }
+
+    /// Dynamic radius scaling factor based on orientation (1.20 in landscape, 1.0 in portrait)
+    public func radius(scale: CGFloat = 1.0) -> CGFloat {
+        radius * scale
     }
 
     /// Primary SKColor for particle effects and accents
@@ -126,11 +131,11 @@ public enum FruitType: Int, CaseIterable, Identifiable, Comparable {
         }
     }
 
-    /// Score awarded when merging two fruits into this type
+    /// Score awarded when merging into this fruit type (Tier 1 gives 0; Tier 2+ awards points)
     public var scoreValue: Int {
         switch self {
-        case .redCurrant: return 2
-        case .blueberry: return 4
+        case .redCurrant: return 0 // Tier 1 fruit does not count for score
+        case .blueberry: return 4  // Tier 2 fruit awards initial points
         case .lemon: return 8
         case .purpleGrapeBunch: return 16
         case .orange: return 32

@@ -53,6 +53,17 @@ public struct ContentView: View {
                     readyOverlay
                 }
 
+                // Game Won Overlay
+                if gameState.phase == .won {
+                    GameWonOverlay(
+                        gameState: gameState,
+                        onRestart: {
+                            restartGame()
+                        }
+                    )
+                    .transition(.opacity.combined(with: .scale(scale: 0.95)))
+                }
+
                 // Game Over Overlay
                 if gameState.phase == .gameOver {
                     GameOverOverlay(
@@ -79,7 +90,8 @@ public struct ContentView: View {
 
     private func configureMotionShake() {
         MotionManager.shared.onShakeDetected = { [weak scene] in
-            scene?.shakeBoard()
+            guard let scene = scene, !scene.isRotating else { return }
+            scene.shakeBoard()
         }
     }
 
@@ -89,11 +101,11 @@ public struct ContentView: View {
                 .ignoresSafeArea()
 
             VStack(spacing: 16) {
-                Text("🍉 FRUIT MERGE 🍋")
+                Text("🍉 LL FRUIT MERGE 🍋")
                     .font(.system(size: 26, weight: .black, design: .rounded))
                     .foregroundColor(.white)
 
-                Text("Drag anywhere to aim horizontally and release to drop fruits.\nCombine matching fruits to evolve them all the way to a Watermelon!\nShake your device or tap SHAKE BOARD to jiggle the fruits.")
+                Text("Drag anywhere to aim horizontally and release to drop fruits.\nCombine matching fruits all the way up to Watermelons!\nFuse two Watermelons together to win the game.")
                     .font(.system(size: 13.5, weight: .medium, design: .rounded))
                     .multilineTextAlignment(.center)
                     .foregroundColor(.white.opacity(0.85))

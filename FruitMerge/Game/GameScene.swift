@@ -7,6 +7,7 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
     // Scene dimensions & orientation
     public var isPortrait: Bool = false
     public var hudOffset: CGFloat = 210
+    public var scaleFactor: CGFloat { isPortrait ? 1.0 : 1.20 }
 
     private var containerWidth: CGFloat = 0
     private var containerHeight: CGFloat = 0
@@ -15,17 +16,26 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
     private var dropZoneY: CGFloat = 0
     private var dangerLineY: CGFloat = 0
 
+    // Previous container bounds for smooth rotation mapping
+    private var prevOriginX: CGFloat = 0
+    private var prevBottomY: CGFloat = 0
+    private var prevWidth: CGFloat = 0
+    private var prevHeight: CGFloat = 0
+
     // Layers & Nodes
     private var containerNode = SKNode()
     private var fruitLayer = SKNode()
     private var effectLayer = SKNode()
+    private var fireworksLayer = SKNode()
     private var dropGuideLine = SKShapeNode()
     private var previewFruitNode: FruitNode?
     private var dangerLineNode = SKShapeNode()
+    private var crosshairNode = SKNode()
 
     // State
     private var canDrop: Bool = true
     private var isAiming: Bool = false
+    public var isRotating: Bool = false
     private var currentAimX: CGFloat = 0
     private var lastUpdateTime: TimeInterval = 0
     private var lastShakeTimestamp: TimeInterval = 0
@@ -39,6 +49,7 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
         setupContainer()
         setupDangerLine()
         setupDropGuide()
+        setupCrosshair()
         prefillBox()
         prepareDropFruit()
     }
@@ -54,6 +65,48 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
 
         effectLayer.zPosition = 20
         addChild(effectLayer)
+
+        fireworksLayer.zPosition = 30
+        addChild(fireworksLayer)
+    }
+
+    private func setupCrosshair() {
+        crosshairNode.removeAllChildren()
+
+        // Outer Reticle Ring
+        let ring = SKShapeNode(circleOfRadius: 22)
+        ring.strokeColor = SKColor.systemRed
+        ring.lineWidth = 2.5
+        ring.fillColor = SKColor.systemRed.withAlphaComponent(0.12)
+        crosshairNode.addChild(ring)
+
+        // Center dot
+        let dot = SKShapeNode(circleOfRadius: 3.5)
+        dot.fillColor = SKColor.systemYellow
+        dot.strokeColor = .clear
+        crosshairNode.addChild(dot)
+
+        // 4 crosshair tick lines
+        let offsets: [(CGPoint, CGPoint)] = [
+            (CGPoint(x: 0, y: 15), CGPoint(x: 0, y: 30)),
+            (CGPoint(x: 0, y: -15), CGPoint(x: 0, y: -30)),
+            (CGPoint(x: 15, y: 0), CGPoint(x: 30, y: 0)),
+            (CGPoint(x: -15, y: 0), CGPoint(x: -30, y: 0))
+        ]
+
+        for (start, end) in offsets {
+            let path = CGMutablePath()
+            path.move(to: start)
+            path.addLine(to: end)
+            let line = SKShapeNode(path: path)
+            line.strokeColor = SKColor.systemRed
+            line.lineWidth = 2.5
+            crosshairNode.addChild(line)
+        }
+
+        crosshairNode.zPosition = 40
+        crosshairNode.isHidden = true
+        effectLayer.addChild(crosshairNode)
     }
 
     public func updateLayout(size: CGSize, isPortrait: Bool, hudOffset: CGFloat) {
@@ -61,25 +114,75 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
         self.isPortrait = isPortrait
         self.hudOffset = hudOffset
 
+        // Record previous container bounds for proportional fruit translation
+        prevOriginX = containerOriginX
+        prevBottomY = containerBottomY
+        prevWidth = containerWidth
+        prevHeight = containerHeight
+
+        // Freeze all fruits immediately during rotation to prevent accidental merges
+        isRotating = true
+        for child in fruitLayer.children {
+            if let fruit = child as? FruitNode {
+                fruit.physicsBody?.isDynamic = false
+                fruit.physicsBody?.velocity = .zero
+                fruit.physicsBody?.angularVelocity = 0
+            }
+        }
+
         setupLayers()
         setupContainer()
         setupDangerLine()
         setupDropGuide()
-        prefillBox()
+        setupCrosshair()
+
+        // Reposition active fruits proportionally into the new orientation box
+        if prevWidth > 0 && prevHeight > 0 && !fruitLayer.children.isEmpty {
+            for child in fruitLayer.children {
+                if let fruit = child as? FruitNode {
+                    let relX = (fruit.position.x - prevOriginX) / prevWidth
+                    let relY = (fruit.position.y - prevBottomY) / prevHeight
+                    let clampedRelX = min(max(relX, 0.08), 0.92)
+                    let clampedRelY = min(max(relY, 0.05), 0.95)
+
+                    fruit.position = CGPoint(
+                        x: containerOriginX + (clampedRelX * containerWidth),
+                        y: containerBottomY + (clampedRelY * containerHeight)
+                    )
+                }
+            }
+        } else {
+            prefillBox()
+        }
+
         prepareDropFruit()
+
+        // After rotation settles smoothly (0.45s), unfreeze physics and re-enable input
+        let unfreezeWait = SKAction.wait(forDuration: 0.45)
+        run(unfreezeWait) { [weak self] in
+            guard let self = self else { return }
+            for child in self.fruitLayer.children {
+                if let fruit = child as? FruitNode {
+                    fruit.physicsBody?.isDynamic = true
+                }
+            }
+            self.isRotating = false
+        }
     }
 
     public func resetScene() {
         fruitLayer.removeAllChildren()
         effectLayer.removeAllChildren()
+        fireworksLayer.removeAllChildren()
+        crosshairNode.isHidden = true
         canDrop = true
         isAiming = false
+        setupCrosshair()
         prefillBox()
         prepareDropFruit()
     }
 
     /// Pre-fills ~1/4 of the square box with a varied mix of fruit tiers (Red Currant up to Apple)
-    /// without placing identical fruits directly adjacent to each other (preventing auto-merging on game start)
     public func prefillBox() {
         fruitLayer.removeAllChildren()
 
@@ -91,16 +194,15 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
         let maxY = containerBottomY + targetFillHeight
         let margin: CGFloat = 10
 
-        var y = containerBottomY + 20
+        var y = containerBottomY + (20 * scaleFactor)
         var lastRowTiers: [FruitType] = []
 
         while y <= maxY {
-            var x = containerOriginX + margin + 14
+            var x = containerOriginX + margin + (14 * scaleFactor)
             var currentRowTiers: [FruitType] = []
             var lastTierInRow: FruitType? = nil
 
-            while x <= (containerOriginX + containerWidth - margin - 14) {
-                // Pick a tier that doesn't match the immediate left or below neighbor
+            while x <= (containerOriginX + containerWidth - margin - (14 * scaleFactor)) {
                 let colIndex = currentRowTiers.count
                 let belowTier = (colIndex < lastRowTiers.count) ? lastRowTiers[colIndex] : nil
 
@@ -109,7 +211,7 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
                 }
                 let chosenTier = candidateTiers.randomElement() ?? allowedTiers.randomElement() ?? .redCurrant
 
-                let fruit = FruitNode(fruitType: chosenTier)
+                let fruit = FruitNode(fruitType: chosenTier, scale: scaleFactor)
                 let jitterX = CGFloat.random(in: -2...2)
                 let jitterY = CGFloat.random(in: -1...1)
                 fruit.position = CGPoint(x: x + jitterX, y: y + jitterY)
@@ -119,23 +221,22 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
                 currentRowTiers.append(chosenTier)
                 lastTierInRow = chosenTier
 
-                x += (chosenTier.radius * 2) + 4
+                x += (chosenTier.radius(scale: scaleFactor) * 2) + (4 * scaleFactor)
             }
 
             lastRowTiers = currentRowTiers
-            y += 34
+            y += (34 * scaleFactor)
         }
     }
 
     /// Shakes the board: applies random physical impulses to all fruits and shakes the scene visually
     public func shakeBoard() {
-        guard gameState?.phase == .playing else { return }
+        guard gameState?.phase == .playing, !isRotating, !(gameState?.isBombModeActive ?? false) else { return }
 
         let now = CACurrentMediaTime()
         guard now - lastShakeTimestamp > 0.40 else { return }
         lastShakeTimestamp = now
 
-        // Apply dynamic upward & horizontal impulses to all active fruits
         for child in fruitLayer.children {
             guard let fruit = child as? FruitNode,
                   let body = fruit.physicsBody,
@@ -143,13 +244,12 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
                 continue
             }
 
-            let impulseX = CGFloat.random(in: -65...65)
-            let impulseY = CGFloat.random(in: 40...130)
+            let impulseX = CGFloat.random(in: -65...65) * scaleFactor
+            let impulseY = CGFloat.random(in: 40...130) * scaleFactor
             body.applyImpulse(CGVector(dx: impulseX, dy: impulseY))
             body.applyAngularImpulse(CGFloat.random(in: -0.04...0.04))
         }
 
-        // Screen / Container shake animation
         let shakeSequence = SKAction.sequence([
             .moveBy(x: -7, y: 3, duration: 0.03),
             .moveBy(x: 14, y: -6, duration: 0.035),
@@ -162,7 +262,6 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
         containerNode.run(shakeSequence)
         fruitLayer.run(shakeSequence)
 
-        // Audio & Haptics
         if let state = gameState {
             AudioManager.shared.playButtonTap(isMuted: state.isMuted)
             HapticManager.shared.mergeFeedback(tier: .orange, enabled: state.isHapticsEnabled)
@@ -173,12 +272,10 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
         containerNode.removeAllChildren()
 
         if isPortrait {
-            // Portrait Layout: HUD is on top
             let topPadding = hudOffset + 12
             let availableWidth = max(240, size.width - 36)
             let availableHeight = max(240, size.height - topPadding - 36)
             let baseSize = min(availableWidth, availableHeight)
-            // 25% smaller square box
             let boxSize = baseSize * 0.75
 
             containerWidth = boxSize
@@ -188,21 +285,19 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
             dropZoneY = containerBottomY + containerHeight + 22
             dangerLineY = containerBottomY + containerHeight - 12
         } else {
-            // Landscape Layout: HUD is on left
             let leftPadding = hudOffset + 16
             let availableWidth = max(240, size.width - leftPadding - 36)
             let availableHeight = max(240, size.height * 0.88)
             let baseSize = min(availableWidth, availableHeight)
-            // 25% smaller square box
-            let boxSize = baseSize * 0.75
+            let boxSize = baseSize * 0.90 // +20% larger in Landscape mode
 
             containerWidth = boxSize
             containerHeight = boxSize
             let centerX = leftPadding + (size.width - leftPadding) / 2
             containerOriginX = centerX - (boxSize / 2)
-            containerBottomY = (size.height - boxSize) / 2 - 12
-            dropZoneY = containerBottomY + containerHeight + 22
-            dangerLineY = containerBottomY + containerHeight - 12
+            containerBottomY = (size.height - boxSize) / 2 - 10
+            dropZoneY = containerBottomY + containerHeight + (24 * scaleFactor)
+            dangerLineY = containerBottomY + containerHeight - (12 * scaleFactor)
         }
 
         // Visual Square Background
@@ -271,7 +366,6 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
         dangerLineNode.zPosition = 5
         containerNode.addChild(dangerLineNode)
 
-        // Pulsing danger indicator
         let fadeOut = SKAction.fadeAlpha(to: 0.25, duration: 0.8)
         let fadeIn = SKAction.fadeAlpha(to: 0.75, duration: 0.8)
         dangerLineNode.run(SKAction.repeatForever(SKAction.sequence([fadeOut, fadeIn])))
@@ -291,8 +385,8 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
         previewFruitNode?.removeFromParent()
 
         let fruitType = state.currentFruit
-        let fruit = FruitNode(fruitType: fruitType)
-        fruit.physicsBody?.isDynamic = false // Static preview until dropped
+        let fruit = FruitNode(fruitType: fruitType, scale: scaleFactor)
+        fruit.physicsBody?.isDynamic = false
 
         currentAimX = containerOriginX + (containerWidth / 2)
         fruit.position = CGPoint(x: currentAimX, y: dropZoneY)
@@ -316,7 +410,7 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
 
         let dashedPath = path.copy(dashingWithPhase: 0, lengths: [4.0, 4.0])
         dropGuideLine.path = dashedPath
-        dropGuideLine.isHidden = !isAiming
+        dropGuideLine.isHidden = !isAiming || (gameState?.isBombModeActive ?? false)
     }
 
     private func clampedX(_ touchX: CGFloat, radius: CGFloat) -> CGFloat {
@@ -325,27 +419,53 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
         return min(max(touchX, minX), maxX)
     }
 
-    // MARK: - Touch Handling (Aim on Drag, Drop on Release)
+    // MARK: - Touch Handling (Drop Aiming vs. Bomb Targeting)
 
     public override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        guard let touch = touches.first, canDrop, gameState?.phase == .playing else { return }
+        guard let touch = touches.first, !isRotating, gameState?.phase == .playing else { return }
         let location = touch.location(in: self)
 
-        // Only begin aiming if touch is within or near container horizontal area
-        if location.x >= (containerOriginX - 30) && location.x <= (containerOriginX + containerWidth + 30) {
+        if gameState?.isBombModeActive == true {
+            crosshairNode.position = location
+            crosshairNode.isHidden = false
+            previewFruitNode?.isHidden = true
+            dropGuideLine.isHidden = true
+            return
+        }
+
+        if canDrop && location.x >= (containerOriginX - 30) && location.x <= (containerOriginX + containerWidth + 30) {
             isAiming = true
             updateAimPosition(location.x)
         }
     }
 
     public override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
-        guard let touch = touches.first, isAiming, canDrop, gameState?.phase == .playing else { return }
+        guard let touch = touches.first, !isRotating, gameState?.phase == .playing else { return }
         let location = touch.location(in: self)
-        updateAimPosition(location.x)
+
+        if gameState?.isBombModeActive == true {
+            crosshairNode.position = location
+            crosshairNode.isHidden = false
+            return
+        }
+
+        if isAiming && canDrop {
+            updateAimPosition(location.x)
+        }
     }
 
     public override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
-        guard isAiming, canDrop, gameState?.phase == .playing else { return }
+        guard let touch = touches.first, !isRotating, gameState?.phase == .playing else { return }
+        let location = touch.location(in: self)
+
+        // BOMB MODE EXECUTION
+        if gameState?.isBombModeActive == true {
+            handleBombTargeting(at: location)
+            return
+        }
+
+        // REGULAR DROP
+        guard isAiming, canDrop else { return }
         isAiming = false
         dropGuideLine.isHidden = true
         dropFruit()
@@ -354,11 +474,116 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
     public override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
         isAiming = false
         dropGuideLine.isHidden = true
+        if !(gameState?.isBombModeActive ?? false) {
+            crosshairNode.isHidden = true
+        }
+    }
+
+    private func handleBombTargeting(at location: CGPoint) {
+        let hitNodes = nodes(at: location)
+        var targetFruit: FruitNode?
+
+        for node in hitNodes {
+            if let f = node as? FruitNode {
+                targetFruit = f
+                break
+            } else if let f = node.parent as? FruitNode {
+                targetFruit = f
+                break
+            }
+        }
+
+        if let fruit = targetFruit {
+            detonateFruit(fruit)
+        } else {
+            // If tapped outside container, cancel bomb mode
+            if location.x < containerOriginX || location.x > (containerOriginX + containerWidth) || location.y < containerBottomY {
+                gameState?.deactivateBombMode()
+                crosshairNode.isHidden = true
+                prepareDropFruit()
+            }
+        }
+    }
+
+    /// Blows up the selected fruit, pushing surrounding fruits and allowing gravity to fill the gap
+    private func detonateFruit(_ fruit: FruitNode) {
+        guard let state = gameState else { return }
+        let blastPoint = fruit.position
+
+        // 1. Blast shockwave ring
+        let shockwave = SKShapeNode(circleOfRadius: 15)
+        shockwave.strokeColor = SKColor.systemOrange
+        shockwave.lineWidth = 4
+        shockwave.fillColor = SKColor.yellow.withAlphaComponent(0.25)
+        shockwave.position = blastPoint
+        shockwave.zPosition = 32
+        effectLayer.addChild(shockwave)
+
+        let expand = SKAction.scale(to: 5.0, duration: 0.28)
+        let fade = SKAction.fadeOut(withDuration: 0.28)
+        shockwave.run(SKAction.sequence([SKAction.group([expand, fade]), SKAction.removeFromParent()]))
+
+        // 2. Fiery explosion particles
+        let colors: [SKColor] = [.systemOrange, .systemRed, .systemYellow, .white]
+        for _ in 0..<32 {
+            let spark = SKShapeNode(circleOfRadius: CGFloat.random(in: 3...7))
+            spark.fillColor = colors.randomElement() ?? .systemOrange
+            spark.strokeColor = .clear
+            spark.position = blastPoint
+            spark.zPosition = 33
+            effectLayer.addChild(spark)
+
+            let angle = CGFloat.random(in: 0...(2 * .pi))
+            let distance = CGFloat.random(in: 30...90) * scaleFactor
+            let dest = CGPoint(
+                x: blastPoint.x + cos(angle) * distance,
+                y: blastPoint.y + sin(angle) * distance
+            )
+
+            let move = SKAction.move(to: dest, duration: 0.35)
+            move.timingMode = .easeOut
+            let particleFade = SKAction.fadeOut(withDuration: 0.35)
+            let shrink = SKAction.scale(to: 0.1, duration: 0.35)
+            spark.run(SKAction.sequence([SKAction.group([move, particleFade, shrink]), SKAction.removeFromParent()]))
+        }
+
+        // 3. Radial impulse shockwave to surrounding fruits
+        let blastRadius = 160.0 * scaleFactor
+        for child in fruitLayer.children {
+            guard let other = child as? FruitNode, other !== fruit,
+                  let body = other.physicsBody, body.isDynamic else { continue }
+
+            let dx = other.position.x - blastPoint.x
+            let dy = other.position.y - blastPoint.y
+            let dist = max(12, sqrt(dx * dx + dy * dy))
+
+            if dist < blastRadius {
+                let strength = ((blastRadius - dist) / blastRadius) * (85.0 * scaleFactor)
+                body.applyImpulse(CGVector(dx: (dx / dist) * strength, dy: (dy / dist) * strength + 18))
+            }
+        }
+
+        // 4. Remove targeted fruit
+        fruit.removeFromParent()
+
+        // 5. Sound & Haptics
+        AudioManager.shared.playGameOverSound(isMuted: state.isMuted)
+        HapticManager.shared.gameOverFeedback(enabled: state.isHapticsEnabled)
+
+        // 6. Deactivate Bomb Mode and re-enable preview
+        state.deactivateBombMode()
+        crosshairNode.isHidden = true
+
+        let wait = SKAction.wait(forDuration: 0.25)
+        run(wait) { [weak self] in
+            guard let self = self, self.gameState?.phase == .playing else { return }
+            self.prepareDropFruit()
+        }
     }
 
     private func updateAimPosition(_ touchX: CGFloat) {
         guard let preview = previewFruitNode else { return }
-        let clamped = clampedX(touchX, radius: preview.fruitType.radius)
+        let clamped = clampedX(touchX, radius: preview.effectiveRadius)
         currentAimX = clamped
         preview.position.x = clamped
         updateDropGuide()
@@ -370,20 +595,16 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
         canDrop = false
         preview.removeFromParent()
 
-        // Create dropped fruit with active physics
-        let droppedFruit = FruitNode(fruitType: preview.fruitType)
+        let droppedFruit = FruitNode(fruitType: preview.fruitType, scale: scaleFactor)
         droppedFruit.position = preview.position
         fruitLayer.addChild(droppedFruit)
         droppedFruit.physicsBody?.isDynamic = true
 
-        // Audio & Haptic Feedback
         AudioManager.shared.playDropSound(isMuted: state.isMuted)
         HapticManager.shared.dropFeedback(enabled: state.isHapticsEnabled)
 
-        // Advance to next fruit in state
         _ = state.advanceFruit()
 
-        // Cooldown before next fruit is ready to drop
         let wait = SKAction.wait(forDuration: 0.50)
         run(wait) { [weak self] in
             guard let self = self, self.gameState?.phase == .playing else { return }
@@ -392,15 +613,16 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
         }
     }
 
-    // MARK: - Collision Detection & Merging
+    // MARK: - Collision Detection, Merging & Victory
 
     public func didBegin(_ contact: SKPhysicsContact) {
+        guard !isRotating else { return }
+
         guard let nodeA = contact.bodyA.node as? FruitNode,
               let nodeB = contact.bodyB.node as? FruitNode else {
             return
         }
 
-        // Must match same fruit type and not be already in merge animation
         guard nodeA.fruitType == nodeB.fruitType,
               !nodeA.isMerging, !nodeB.isMerging else {
             return
@@ -416,7 +638,6 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
 
         let fruitType = nodeA.fruitType
 
-        // Animate both fruits shrinking into midpoint
         nodeA.playMergeEffect(into: mergePoint) {}
         nodeB.playMergeEffect(into: mergePoint) { [weak self] in
             guard let self = self else { return }
@@ -428,8 +649,7 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
         guard let state = gameState else { return }
 
         if let nextTier = type.nextTier {
-            // Standard merge: evolve to next fruit tier
-            let newFruit = FruitNode(fruitType: nextTier)
+            let newFruit = FruitNode(fruitType: nextTier, scale: scaleFactor)
             newFruit.position = point
             fruitLayer.addChild(newFruit)
             newFruit.playSpawnAnimation()
@@ -440,12 +660,64 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
             AudioManager.shared.playMergeSound(for: nextTier, isMuted: state.isMuted)
             HapticManager.shared.mergeFeedback(tier: nextTier, enabled: state.isHapticsEnabled)
         } else {
-            // Watermelon + Watermelon: Supernova burst clearing space and awarding massive bonus
-            spawnWatermelonSupernova(at: point)
-            state.recordWatermelonBurst()
+            // Two Watermelons Touch -> GAME WON!
+            triggerGameWon(at: point)
+        }
+    }
 
-            AudioManager.shared.playMergeSound(for: .watermelon, isMuted: state.isMuted)
-            HapticManager.shared.celebrationFeedback(enabled: state.isHapticsEnabled)
+    private func triggerGameWon(at point: CGPoint) {
+        guard let state = gameState, state.phase == .playing else { return }
+
+        spawnWatermelonSupernova(at: point)
+        launchFireworksShow()
+
+        state.triggerWin()
+        AudioManager.shared.playMergeSound(for: .watermelon, isMuted: state.isMuted)
+        HapticManager.shared.celebrationFeedback(enabled: state.isHapticsEnabled)
+    }
+
+    private func launchFireworksShow() {
+        fireworksLayer.removeAllChildren()
+
+        let colors: [SKColor] = [.systemYellow, .systemRed, .systemPink, .systemCyan, .systemGreen, .white]
+
+        for i in 0..<6 {
+            let delay = SKAction.wait(forDuration: Double(i) * 0.25)
+            let burst = SKAction.run { [weak self] in
+                guard let self = self else { return }
+                let randomX = CGFloat.random(in: self.containerOriginX...(self.containerOriginX + self.containerWidth))
+                let randomY = CGFloat.random(in: (self.containerBottomY + self.containerHeight * 0.4)...(self.containerBottomY + self.containerHeight * 0.95))
+                self.spawnFireworkRocket(at: CGPoint(x: randomX, y: randomY), colors: colors)
+            }
+            fireworksLayer.run(SKAction.sequence([delay, burst]))
+        }
+    }
+
+    private func spawnFireworkRocket(at position: CGPoint, colors: [SKColor]) {
+        let particleCount = 28
+        let color = colors.randomElement() ?? .systemYellow
+
+        for _ in 0..<particleCount {
+            let spark = SKShapeNode(circleOfRadius: CGFloat.random(in: 3...7))
+            spark.fillColor = color
+            spark.strokeColor = .clear
+            spark.position = position
+            spark.zPosition = 35
+            fireworksLayer.addChild(spark)
+
+            let angle = CGFloat.random(in: 0...(2 * .pi))
+            let distance = CGFloat.random(in: 30...95)
+            let dest = CGPoint(
+                x: position.x + cos(angle) * distance,
+                y: position.y + sin(angle) * distance
+            )
+
+            let move = SKAction.move(to: dest, duration: 0.45)
+            move.timingMode = .easeOut
+            let fade = SKAction.fadeOut(withDuration: 0.45)
+            let scale = SKAction.scale(to: 0.1, duration: 0.45)
+
+            spark.run(SKAction.sequence([SKAction.group([move, fade, scale]), SKAction.removeFromParent()]))
         }
     }
 
@@ -476,7 +748,6 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
     }
 
     private func spawnWatermelonSupernova(at position: CGPoint) {
-        // Shockwave ring
         let ring = SKShapeNode(circleOfRadius: 20)
         ring.strokeColor = SKColor.systemGreen
         ring.fillColor = .clear
@@ -489,7 +760,6 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
         let ringFade = SKAction.fadeOut(withDuration: 0.5)
         ring.run(SKAction.sequence([SKAction.group([ringExpand, ringFade]), SKAction.removeFromParent()]))
 
-        // Burst particles
         let colors: [SKColor] = [.systemGreen, .systemRed, .systemYellow, .white]
         for _ in 0..<36 {
             let particle = SKShapeNode(circleOfRadius: CGFloat.random(in: 4...8))
@@ -517,7 +787,7 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
     // MARK: - Game Loop & Danger Line Check
 
     public override func update(_ currentTime: TimeInterval) {
-        guard gameState?.phase == .playing else { return }
+        guard gameState?.phase == .playing, !isRotating else { return }
 
         let deltaTime: TimeInterval
         if lastUpdateTime == 0 {
@@ -540,7 +810,7 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
                 continue
             }
 
-            let fruitTopY = fruit.position.y + fruit.fruitType.radius
+            let fruitTopY = fruit.position.y + fruit.effectiveRadius
             let isAbove = fruitTopY > dangerLineY
             let isSettled = abs(body.velocity.dy) < 15 && abs(body.velocity.dx) < 15
 

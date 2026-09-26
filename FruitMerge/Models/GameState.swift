@@ -4,6 +4,7 @@ import Combine
 public enum GamePhase {
     case ready
     case playing
+    case won
     case gameOver
 }
 
@@ -23,6 +24,7 @@ public final class GameState: ObservableObject {
     @Published public var isHapticsEnabled: Bool = true {
         didSet { UserDefaults.standard.set(isHapticsEnabled, forKey: hapticsKey) }
     }
+    @Published public var isBombModeActive: Bool = false
 
     /// Total merge count in current session
     @Published public var mergeCount: Int = 0
@@ -71,15 +73,30 @@ public final class GameState: ObservableObject {
 
     public func recordWatermelonBurst() {
         mergeCount += 1
-        addScore(4096)
+        addScore(5000)
+    }
+
+    public func triggerWin() {
+        recordWatermelonBurst()
+        phase = .won
     }
 
     public func startNewGame() {
         score = 0
         mergeCount = 0
         maxFruitTierAchieved = .redCurrant
+        isBombModeActive = false
         prepareNextFruits()
         phase = .playing
+    }
+
+    public func toggleBombMode() {
+        guard phase == .playing else { return }
+        isBombModeActive.toggle()
+    }
+
+    public func deactivateBombMode() {
+        isBombModeActive = false
     }
 
     public func triggerGameOver() {

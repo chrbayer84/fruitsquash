@@ -3,6 +3,7 @@ import UIKit
 
 public final class FruitNode: SKNode {
     public let fruitType: FruitType
+    public let scaleFactor: CGFloat
     public let fruitId = UUID()
     public var isMerging: Bool = false
     public var timeAboveDangerLine: TimeInterval = 0
@@ -10,10 +11,11 @@ public final class FruitNode: SKNode {
     private var spriteNode: SKSpriteNode?
 
     // Static texture cache for instant rendering performance
-    private static var textureCache: [FruitType: SKTexture] = [:]
+    private static var textureCache: [String: SKTexture] = [:]
 
-    public init(fruitType: FruitType) {
+    public init(fruitType: FruitType, scale: CGFloat = 1.0) {
         self.fruitType = fruitType
+        self.scaleFactor = scale
         super.init()
 
         name = "Fruit_\(fruitType.displayName)"
@@ -25,10 +27,14 @@ public final class FruitNode: SKNode {
         fatalError("init(coder:) has not been implemented")
     }
 
+    public var effectiveRadius: CGFloat {
+        fruitType.radius(scale: scaleFactor)
+    }
+
     private func setupVisuals() {
-        let baseDiameter = fruitType.radius * 2
-        // Picture size increased by 20% so fruits touch visually at collision boundaries without gaps
-        let visualDiameter = baseDiameter * 1.20
+        let physicalDiameter = effectiveRadius * 2
+        // 10% transparent margin around the fruit so physics bounds touch with a clean visual buffer
+        let visualDiameter = physicalDiameter * 0.90
         let texture = FruitNode.texture(for: fruitType, diameter: visualDiameter)
 
         let sprite = SKSpriteNode(texture: texture)
@@ -39,7 +45,7 @@ public final class FruitNode: SKNode {
     }
 
     private func setupPhysics() {
-        let body = SKPhysicsBody(circleOfRadius: fruitType.radius)
+        let body = SKPhysicsBody(circleOfRadius: effectiveRadius)
         body.isDynamic = true
         body.categoryBitMask = CollisionCategory.fruit
         body.collisionBitMask = CollisionCategory.fruit | CollisionCategory.wall | CollisionCategory.floor
@@ -79,18 +85,19 @@ public final class FruitNode: SKNode {
     // MARK: - Texture Generation & Asset Fallback
 
     public static func texture(for fruitType: FruitType, diameter: CGFloat) -> SKTexture {
-        if let cached = textureCache[fruitType] {
+        let cacheKey = "\(fruitType.rawValue)_\(Int(diameter * 10))"
+        if let cached = textureCache[cacheKey] {
             return cached
         }
 
         // 1. Check for custom PNG image asset
         if let customImage = UIImage(named: fruitType.assetName) {
             let texture = SKTexture(image: customImage)
-            textureCache[fruitType] = texture
+            textureCache[cacheKey] = texture
             return texture
         }
 
-        // 2. Procedural high-resolution standalone artwork (transparent background, zero margin)
+        // 2. Procedural high-resolution standalone artwork (transparent background, 10% safety margin)
         let scale = UIScreen.main.scale
         let size = CGSize(width: diameter * scale, height: diameter * scale)
         let renderer = UIGraphicsImageRenderer(size: size)
@@ -104,25 +111,26 @@ public final class FruitNode: SKNode {
                 drawSingleRedCurrant(in: rect, context: cgContext)
             case .blueberry:
                 drawSingleBlueberry(in: rect, context: cgContext)
-            case .lemon:
-                drawWholeLemon(in: rect, context: cgContext)
+            case .purpleGrapeBunch:
+                drawRoundGrapeBunch(in: rect, context: cgContext)
+            case .dragonfruit:
+                drawWholeDragonfruit(in: rect, context: cgContext)
             default:
                 drawEmojiArtwork(emoji: fruitType.emoji, in: rect, context: cgContext)
             }
         }
 
         let texture = SKTexture(image: renderedImage)
-        textureCache[fruitType] = texture
+        textureCache[cacheKey] = texture
         return texture
     }
 
-    // MARK: - Dedicated Fruit Vector Renderers (Full-bleed, no colored coin background)
+    // MARK: - Dedicated Fruit Vector Renderers
 
     /// Draws a single glossy red currant berry
     private static func drawSingleRedCurrant(in rect: CGRect, context: CGContext) {
         let berryRect = rect
 
-        // Berry gradient body
         let colorSpace = CGColorSpaceCreateDeviceRGB()
         let colors = [
             UIColor(red: 1.0, green: 0.25, blue: 0.30, alpha: 1.0).cgColor,
@@ -148,7 +156,7 @@ public final class FruitNode: SKNode {
             context.restoreGState()
         }
 
-        // Top stem calyx dot
+        // Top calyx dot
         context.setFillColor(UIColor(red: 0.35, green: 0.02, blue: 0.04, alpha: 1.0).cgColor)
         let calyxSize = berryRect.width * 0.13
         let calyxRect = CGRect(
@@ -174,7 +182,6 @@ public final class FruitNode: SKNode {
     private static func drawSingleBlueberry(in rect: CGRect, context: CGContext) {
         let berryRect = rect
 
-        // Blueberry gradient body
         let colorSpace = CGColorSpaceCreateDeviceRGB()
         let colors = [
             UIColor(red: 0.35, green: 0.52, blue: 0.98, alpha: 1.0).cgColor,
@@ -200,7 +207,7 @@ public final class FruitNode: SKNode {
             context.restoreGState()
         }
 
-        // Star calyx crown at top
+        // Star calyx crown
         context.setFillColor(UIColor(red: 0.05, green: 0.08, blue: 0.28, alpha: 0.95).cgColor)
         let crownRadius = berryRect.width * 0.15
         let crownCenter = CGPoint(x: berryRect.midX, y: berryRect.minY + crownRadius * 1.1)
@@ -217,7 +224,7 @@ public final class FruitNode: SKNode {
         context.addPath(path)
         context.fillPath()
 
-        // Dusty bloom soft highlight
+        // Dusty bloom highlight
         context.setFillColor(UIColor(red: 0.70, green: 0.82, blue: 1.0, alpha: 0.50).cgColor)
         let bloom = CGRect(
             x: berryRect.minX + berryRect.width * 0.16,
@@ -231,36 +238,29 @@ public final class FruitNode: SKNode {
     /// Draws a whole sunny yellow lemon with tapered pointed ends
     private static func drawWholeLemon(in rect: CGRect, context: CGContext) {
         let lemonRect = rect
-
-        // Lemon body shape path with tapered lemon tips
         let path = CGMutablePath()
         let tipW = lemonRect.width * 0.08
         let tipH = lemonRect.height * 0.08
 
         path.move(to: CGPoint(x: lemonRect.midX, y: lemonRect.minY))
-        // Top right to right tip
         path.addQuadCurve(
             to: CGPoint(x: lemonRect.maxX, y: lemonRect.midY),
             control: CGPoint(x: lemonRect.maxX + tipW, y: lemonRect.minY + tipH)
         )
-        // Right tip to bottom
         path.addQuadCurve(
             to: CGPoint(x: lemonRect.midX, y: lemonRect.maxY),
             control: CGPoint(x: lemonRect.maxX - tipW, y: lemonRect.maxY)
         )
-        // Bottom to left tip
         path.addQuadCurve(
             to: CGPoint(x: lemonRect.minX, y: lemonRect.midY),
             control: CGPoint(x: lemonRect.minX - tipW, y: lemonRect.maxY - tipH)
         )
-        // Left tip to top
         path.addQuadCurve(
             to: CGPoint(x: lemonRect.midX, y: lemonRect.minY),
             control: CGPoint(x: lemonRect.minX + tipW, y: lemonRect.minY)
         )
         path.closeSubpath()
 
-        // Lemon radial gradient
         let colorSpace = CGColorSpaceCreateDeviceRGB()
         let colors = [
             UIColor(red: 1.00, green: 0.94, blue: 0.35, alpha: 1.0).cgColor,
@@ -286,7 +286,7 @@ public final class FruitNode: SKNode {
             context.restoreGState()
         }
 
-        // Small stem calyx at top pole
+        // Calyx tip
         context.setFillColor(UIColor(red: 0.42, green: 0.55, blue: 0.15, alpha: 1.0).cgColor)
         let stemSize = lemonRect.width * 0.12
         let stemRect = CGRect(
@@ -297,13 +297,174 @@ public final class FruitNode: SKNode {
         )
         context.fillEllipse(in: stemRect)
 
-        // Gloss highlight
+        // Gloss
         context.setFillColor(UIColor.white.withAlphaComponent(0.55).cgColor)
         let gloss = CGRect(
             x: lemonRect.minX + lemonRect.width * 0.20,
             y: lemonRect.minY + lemonRect.height * 0.16,
             width: lemonRect.width * 0.34,
             height: lemonRect.height * 0.22
+        )
+        context.fillEllipse(in: gloss)
+    }
+
+    /// Draws a round cluster of purple grapes approximating a spherical shape
+    private static func drawRoundGrapeBunch(in rect: CGRect, context: CGContext) {
+        let c = CGPoint(x: rect.midX, y: rect.midY + rect.height * 0.03)
+        let r = rect.width * 0.44
+
+        // Positions of individual grapes arranged spherically
+        let grapeRadius = rect.width * 0.155
+        let offsets: [CGPoint] = [
+            CGPoint(x: 0, y: 0),
+            CGPoint(x: -r * 0.55, y: -r * 0.45),
+            CGPoint(x: r * 0.55, y: -r * 0.45),
+            CGPoint(x: -r * 0.65, y: r * 0.20),
+            CGPoint(x: r * 0.65, y: r * 0.20),
+            CGPoint(x: 0, y: -r * 0.60),
+            CGPoint(x: -r * 0.32, y: r * 0.62),
+            CGPoint(x: r * 0.32, y: r * 0.62),
+            CGPoint(x: 0, y: r * 0.55),
+            CGPoint(x: -r * 0.28, y: -r * 0.15),
+            CGPoint(x: r * 0.28, y: -r * 0.15)
+        ]
+
+        let colorSpace = CGColorSpaceCreateDeviceRGB()
+        let grapeColors = [
+            UIColor(red: 0.72, green: 0.35, blue: 0.95, alpha: 1.0).cgColor,
+            UIColor(red: 0.48, green: 0.15, blue: 0.75, alpha: 1.0).cgColor,
+            UIColor(red: 0.25, green: 0.05, blue: 0.45, alpha: 1.0).cgColor
+        ] as CFArray
+        let locations: [CGFloat] = [0.0, 0.65, 1.0]
+        guard let grapeGrad = CGGradient(colorsSpace: colorSpace, colors: grapeColors, locations: locations) else { return }
+
+        // Draw each spherical grape with depth and highlight
+        for pt in offsets {
+            let grapeCenter = CGPoint(x: c.x + pt.x, y: c.y + pt.y)
+            let gRect = CGRect(
+                x: grapeCenter.x - grapeRadius,
+                y: grapeCenter.y - grapeRadius,
+                width: grapeRadius * 2,
+                height: grapeRadius * 2
+            )
+
+            context.saveGState()
+            context.addEllipse(in: gRect)
+            context.clip()
+
+            let lightCenter = CGPoint(x: gRect.midX - grapeRadius * 0.25, y: gRect.midY - grapeRadius * 0.25)
+            context.drawRadialGradient(
+                grapeGrad,
+                startCenter: lightCenter,
+                startRadius: 0,
+                endCenter: CGPoint(x: gRect.midX, y: gRect.midY),
+                endRadius: grapeRadius * 1.05,
+                options: [.drawsAfterEndLocation]
+            )
+            context.restoreGState()
+
+            // Small gloss specular on each grape
+            context.setFillColor(UIColor.white.withAlphaComponent(0.40).cgColor)
+            let specular = CGRect(
+                x: gRect.minX + grapeRadius * 0.35,
+                y: gRect.minY + grapeRadius * 0.30,
+                width: grapeRadius * 0.55,
+                height: grapeRadius * 0.40
+            )
+            context.fillEllipse(in: specular)
+        }
+
+        // Top stem and vine leaf
+        context.setFillColor(UIColor(red: 0.35, green: 0.68, blue: 0.15, alpha: 1.0).cgColor)
+        let leafRect = CGRect(
+            x: rect.midX - rect.width * 0.15,
+            y: rect.minY + rect.height * 0.02,
+            width: rect.width * 0.30,
+            height: rect.height * 0.16
+        )
+        context.fillEllipse(in: leafRect)
+
+        context.setFillColor(UIColor(red: 0.45, green: 0.28, blue: 0.12, alpha: 1.0).cgColor)
+        let stemRect = CGRect(
+            x: rect.midX - rect.width * 0.04,
+            y: rect.minY,
+            width: rect.width * 0.08,
+            height: rect.height * 0.12
+        )
+        context.fillRoundedRect(stemRect, cornerWidth: 2, cornerHeight: 2)
+    }
+
+    /// Draws a whole dragonfruit (pitaya) with vibrant pink body and green-tipped scales
+    private static func drawWholeDragonfruit(in rect: CGRect, context: CGContext) {
+        let fruitRect = rect
+
+        // Dragonfruit body oval
+        let colorSpace = CGColorSpaceCreateDeviceRGB()
+        let pinkColors = [
+            UIColor(red: 1.00, green: 0.25, blue: 0.60, alpha: 1.0).cgColor,
+            UIColor(red: 0.90, green: 0.10, blue: 0.45, alpha: 1.0).cgColor,
+            UIColor(red: 0.60, green: 0.02, blue: 0.28, alpha: 1.0).cgColor
+        ] as CFArray
+        let locations: [CGFloat] = [0.0, 0.65, 1.0]
+
+        guard let pinkGrad = CGGradient(colorsSpace: colorSpace, colors: pinkColors, locations: locations) else { return }
+
+        context.saveGState()
+        context.addEllipse(in: fruitRect)
+        context.clip()
+
+        let lightCenter = CGPoint(x: fruitRect.midX - fruitRect.width * 0.15, y: fruitRect.midY - fruitRect.height * 0.15)
+        context.drawRadialGradient(
+            pinkGrad,
+            startCenter: lightCenter,
+            startRadius: 0,
+            endCenter: CGPoint(x: fruitRect.midX, y: fruitRect.midY),
+            endRadius: fruitRect.width * 0.55,
+            options: [.drawsAfterEndLocation]
+        )
+        context.restoreGState()
+
+        // Green-tipped curved scales projecting across the body
+        let scalePositions: [(CGPoint, CGFloat)] = [
+            (CGPoint(x: fruitRect.minX + fruitRect.width * 0.18, y: fruitRect.midY - fruitRect.height * 0.20), -0.5),
+            (CGPoint(x: fruitRect.maxX - fruitRect.width * 0.18, y: fruitRect.midY - fruitRect.height * 0.20), 0.5),
+            (CGPoint(x: fruitRect.minX + fruitRect.width * 0.15, y: fruitRect.midY + fruitRect.height * 0.12), -0.4),
+            (CGPoint(x: fruitRect.maxX - fruitRect.width * 0.15, y: fruitRect.midY + fruitRect.height * 0.12), 0.4),
+            (CGPoint(x: fruitRect.midX, y: fruitRect.minY + fruitRect.height * 0.08), 0.0),
+            (CGPoint(x: fruitRect.midX - fruitRect.width * 0.12, y: fruitRect.midY), -0.2),
+            (CGPoint(x: fruitRect.midX + fruitRect.width * 0.12, y: fruitRect.midY), 0.2),
+            (CGPoint(x: fruitRect.midX, y: fruitRect.maxY - fruitRect.height * 0.15), 0.0)
+        ]
+
+        let scaleW = fruitRect.width * 0.22
+        let scaleH = fruitRect.height * 0.18
+
+        for (pos, angle) in scalePositions {
+            context.saveGState()
+            context.translateBy(x: pos.x, y: pos.y)
+            context.rotate(by: angle)
+
+            let scalePath = CGMutablePath()
+            scalePath.move(to: CGPoint(x: -scaleW / 2, y: scaleH / 2))
+            scalePath.addQuadCurve(to: CGPoint(x: 0, y: -scaleH / 2), control: CGPoint(x: -scaleW * 0.3, y: -scaleH * 0.2))
+            scalePath.addQuadCurve(to: CGPoint(x: scaleW / 2, y: scaleH / 2), control: CGPoint(x: scaleW * 0.3, y: -scaleH * 0.2))
+            scalePath.closeSubpath()
+
+            // Scale color: bright green with yellow tip
+            context.setFillColor(UIColor(red: 0.35, green: 0.85, blue: 0.15, alpha: 0.95).cgColor)
+            context.addPath(scalePath)
+            context.fillPath()
+
+            context.restoreGState()
+        }
+
+        // Gloss arc
+        context.setFillColor(UIColor.white.withAlphaComponent(0.40).cgColor)
+        let gloss = CGRect(
+            x: fruitRect.minX + fruitRect.width * 0.22,
+            y: fruitRect.minY + fruitRect.height * 0.18,
+            width: fruitRect.width * 0.32,
+            height: fruitRect.height * 0.20
         )
         context.fillEllipse(in: gloss)
     }
