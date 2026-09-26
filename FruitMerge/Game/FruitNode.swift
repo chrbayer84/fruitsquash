@@ -391,7 +391,9 @@ public final class FruitNode: SKNode {
             width: rect.width * 0.08,
             height: rect.height * 0.12
         )
-        context.fillRoundedRect(stemRect, cornerWidth: 2, cornerHeight: 2)
+        let stemPath = CGPath(roundedRect: stemRect, cornerWidth: 2, cornerHeight: 2, transform: nil)
+        context.addPath(stemPath)
+        context.fillPath()
     }
 
     /// Draws a whole dragonfruit (pitaya) with vibrant pink body and green-tipped scales
