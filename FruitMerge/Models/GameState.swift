@@ -27,7 +27,7 @@ public final class GameState: ObservableObject {
     }
     @Published public var isBombModeActive: Bool = false
     @Published public var isUpgradeModeActive: Bool = false
-    @Published public var theme: GameTheme = .dark {
+    @Published public var theme: GameTheme = .greenHills {
         didSet { UserDefaults.standard.set(theme.rawValue, forKey: themeKey) }
     }
 
@@ -49,7 +49,7 @@ public final class GameState: ObservableObject {
            let parsedTheme = GameTheme(rawValue: savedTheme) {
             self.theme = parsedTheme
         } else {
-            self.theme = .dark
+            self.theme = .greenHills
         }
 
         prepareNextFruits()

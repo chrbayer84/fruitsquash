@@ -39,8 +39,6 @@ public final class FruitNode: SKNode {
                 drawRoundGrapeBunch(in: rect, context: cgContext)
             case .dragonfruit:
                 drawWholeDragonfruit(in: rect, context: cgContext)
-            case .pineapple:
-                drawWholePineapple(in: rect, context: cgContext)
             case .watermelon:
                 drawWholeWatermelon(in: rect, context: cgContext)
             default:
@@ -187,8 +185,6 @@ public final class FruitNode: SKNode {
                 drawRoundGrapeBunch(in: rect, context: cgContext)
             case .dragonfruit:
                 drawWholeDragonfruit(in: rect, context: cgContext)
-            case .pineapple:
-                drawWholePineapple(in: rect, context: cgContext)
             case .watermelon:
                 drawWholeWatermelon(in: rect, context: cgContext)
             default:
@@ -574,102 +570,6 @@ public final class FruitNode: SKNode {
             height: fruitRect.height * 0.20
         )
         context.fillEllipse(in: gloss)
-    }
-
-    /// Draws a tall oblong pineapple (aspect ratio 1.0 : 1.8) with spiky green crown on top
-    private static func drawWholePineapple(in rect: CGRect, context: CGContext) {
-        let w = rect.width
-        let h = rect.height
-
-        // Crown occupies top 40% (y: 0 to h * 0.42), Body occupies lower 62% (y: h * 0.36 to h)
-        let bodyRect = CGRect(x: w * 0.05, y: h * 0.36, width: w * 0.90, height: h * 0.62)
-
-        // 1. Pineapple Golden Body
-        let colorSpace = CGColorSpaceCreateDeviceRGB()
-        let amberColors = [
-            UIColor(red: 1.00, green: 0.78, blue: 0.12, alpha: 1.0).cgColor,
-            UIColor(red: 0.95, green: 0.58, blue: 0.05, alpha: 1.0).cgColor,
-            UIColor(red: 0.72, green: 0.35, blue: 0.02, alpha: 1.0).cgColor
-        ] as CFArray
-        let locations: [CGFloat] = [0.0, 0.60, 1.0]
-
-        if let gradient = CGGradient(colorsSpace: colorSpace, colors: amberColors, locations: locations) {
-            context.saveGState()
-            context.addEllipse(in: bodyRect)
-            context.clip()
-
-            let center = CGPoint(x: bodyRect.midX - bodyRect.width * 0.15, y: bodyRect.midY - bodyRect.height * 0.15)
-            context.drawRadialGradient(
-                gradient,
-                startCenter: center,
-                startRadius: 0,
-                endCenter: CGPoint(x: bodyRect.midX, y: bodyRect.midY),
-                endRadius: bodyRect.height * 0.55,
-                options: [.drawsAfterEndLocation]
-            )
-            context.restoreGState()
-        }
-
-        // 2. Diamond Pattern Texture on Body
-        context.saveGState()
-        context.addEllipse(in: bodyRect)
-        context.clip()
-
-        context.setStrokeColor(UIColor(red: 0.55, green: 0.28, blue: 0.02, alpha: 0.45).cgColor)
-        context.setLineWidth(w * 0.035)
-
-        for i in -3...5 {
-            let offset = CGFloat(i) * (w * 0.26)
-            context.move(to: CGPoint(x: bodyRect.minX + offset, y: bodyRect.minY))
-            context.addLine(to: CGPoint(x: bodyRect.minX + offset + bodyRect.width * 0.8, y: bodyRect.maxY))
-        }
-        for i in -3...5 {
-            let offset = CGFloat(i) * (w * 0.26)
-            context.move(to: CGPoint(x: bodyRect.maxX - offset, y: bodyRect.minY))
-            context.addLine(to: CGPoint(x: bodyRect.maxX - offset - bodyRect.width * 0.8, y: bodyRect.maxY))
-        }
-        context.strokePath()
-
-        // Diamond center dots
-        context.setFillColor(UIColor(red: 0.45, green: 0.20, blue: 0.02, alpha: 0.55).cgColor)
-        for row in 0...5 {
-            let ry = bodyRect.minY + CGFloat(row) * (bodyRect.height * 0.16) + bodyRect.height * 0.08
-            for col in 0...4 {
-                let rx = bodyRect.minX + CGFloat(col) * (bodyRect.width * 0.22) + (row % 2 == 1 ? bodyRect.width * 0.11 : 0) + bodyRect.width * 0.06
-                if bodyRect.contains(CGPoint(x: rx, y: ry)) {
-                    context.fillEllipse(in: CGRect(x: rx - w * 0.025, y: ry - w * 0.025, width: w * 0.05, height: w * 0.05))
-                }
-            }
-        }
-        context.restoreGState()
-
-        // 3. Spiky Green Crown Leaves on Top (reaching to y: 0)
-        let crownLeaves: [(CGPoint, CGPoint, CGPoint, UIColor)] = [
-            (CGPoint(x: w * 0.50, y: h * 0.40), CGPoint(x: w * 0.50, y: 0), CGPoint(x: w * 0.50, y: h * 0.40), UIColor(red: 0.22, green: 0.68, blue: 0.18, alpha: 1.0)),
-            (CGPoint(x: w * 0.42, y: h * 0.40), CGPoint(x: w * 0.22, y: h * 0.08), CGPoint(x: w * 0.48, y: h * 0.40), UIColor(red: 0.28, green: 0.78, blue: 0.22, alpha: 0.95)),
-            (CGPoint(x: w * 0.35, y: h * 0.42), CGPoint(x: w * 0.08, y: h * 0.20), CGPoint(x: w * 0.45, y: h * 0.42), UIColor(red: 0.18, green: 0.58, blue: 0.14, alpha: 0.90)),
-            (CGPoint(x: w * 0.58, y: h * 0.40), CGPoint(x: w * 0.78, y: h * 0.08), CGPoint(x: w * 0.52, y: h * 0.40), UIColor(red: 0.28, green: 0.78, blue: 0.22, alpha: 0.95)),
-            (CGPoint(x: w * 0.65, y: h * 0.42), CGPoint(x: w * 0.92, y: h * 0.20), CGPoint(x: w * 0.55, y: h * 0.42), UIColor(red: 0.18, green: 0.58, blue: 0.14, alpha: 0.90)),
-            (CGPoint(x: w * 0.46, y: h * 0.38), CGPoint(x: w * 0.38, y: h * 0.04), CGPoint(x: w * 0.54, y: h * 0.38), UIColor(red: 0.35, green: 0.85, blue: 0.25, alpha: 1.0)),
-            (CGPoint(x: w * 0.54, y: h * 0.38), CGPoint(x: w * 0.62, y: h * 0.04), CGPoint(x: w * 0.46, y: h * 0.38), UIColor(red: 0.35, green: 0.85, blue: 0.25, alpha: 1.0))
-        ]
-
-        for (baseL, tip, baseR, col) in crownLeaves {
-            let leaf = CGMutablePath()
-            leaf.move(to: baseL)
-            leaf.addQuadCurve(to: tip, control: CGPoint(x: (baseL.x + tip.x) * 0.5 - w * 0.04, y: (baseL.y + tip.y) * 0.5))
-            leaf.addQuadCurve(to: baseR, control: CGPoint(x: (baseR.x + tip.x) * 0.5 + w * 0.04, y: (baseR.y + tip.y) * 0.5))
-            leaf.closeSubpath()
-
-            context.setFillColor(col.cgColor)
-            context.addPath(leaf)
-            context.fillPath()
-        }
-
-        // 4. Gloss shine on body
-        context.setFillColor(UIColor.white.withAlphaComponent(0.35).cgColor)
-        let bodyGloss = CGRect(x: bodyRect.minX + bodyRect.width * 0.18, y: bodyRect.minY + bodyRect.height * 0.16, width: bodyRect.width * 0.28, height: bodyRect.height * 0.18)
-        context.fillEllipse(in: bodyGloss)
     }
 
     /// Draws a whole round green watermelon with yellow-green wavy stripes
