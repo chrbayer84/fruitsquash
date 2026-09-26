@@ -192,18 +192,20 @@ public struct HUDView: View {
                 )
             )
 
-            // Evolution / Merge Chain Guide (Split into 2 lines)
-            VStack(alignment: .leading, spacing: 2) {
+            // Evolution / Merge Chain Guide (Split into 2 lines, full width)
+            VStack(alignment: .leading, spacing: 4) {
                 Text("MERGE EVOLUTION")
-                    .font(.system(size: 8, weight: .black, design: .rounded))
+                    .font(.system(size: 8.5, weight: .black, design: .rounded))
                     .foregroundColor(.white.opacity(0.5))
 
                 EvolutionTwoLinesView()
             }
-            .padding(5)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 6)
+            .frame(maxWidth: .infinity, alignment: .leading)
             .background(
                 RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .fill(Color(red: 0.10, green: 0.12, blue: 0.18).opacity(0.8))
+                    .fill(Color(red: 0.10, green: 0.12, blue: 0.18).opacity(0.85))
             )
 
             Spacer()
@@ -328,33 +330,40 @@ private struct EvolutionTwoLinesView: View {
     private let row2: [FruitType] = [.apple, .peach, .coconut, .dragonfruit, .pineapple, .watermelon]
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 3) {
-            // Row 1
-            HStack(spacing: 2) {
+        VStack(spacing: 5) {
+            // Row 1 (Scaled to full width)
+            HStack(spacing: 0) {
                 ForEach(0..<row1.count, id: \.self) { idx in
                     Text(row1[idx].emoji)
-                        .font(.system(size: 11))
+                        .font(.system(size: 15))
                     if idx < row1.count - 1 {
+                        Spacer(minLength: 1)
                         Image(systemName: "arrow.right")
-                            .font(.system(size: 5, weight: .bold))
+                            .font(.system(size: 6.5, weight: .bold))
                             .foregroundColor(.white.opacity(0.35))
+                        Spacer(minLength: 1)
                     }
                 }
             }
+            .frame(maxWidth: .infinity)
 
-            // Row 2
-            HStack(spacing: 2) {
+            // Row 2 (Scaled to full width)
+            HStack(spacing: 0) {
                 ForEach(0..<row2.count, id: \.self) { idx in
                     Text(row2[idx].emoji)
-                        .font(.system(size: 11))
+                        .font(.system(size: 15))
                     if idx < row2.count - 1 {
+                        Spacer(minLength: 1)
                         Image(systemName: "arrow.right")
-                            .font(.system(size: 5, weight: .bold))
+                            .font(.system(size: 6.5, weight: .bold))
                             .foregroundColor(.white.opacity(0.35))
+                        Spacer(minLength: 1)
                     }
                 }
             }
+            .frame(maxWidth: .infinity)
         }
+        .frame(maxWidth: .infinity)
     }
 }
 

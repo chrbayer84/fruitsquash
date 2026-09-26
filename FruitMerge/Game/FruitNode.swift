@@ -33,8 +33,8 @@ public final class FruitNode: SKNode {
 
     private func setupVisuals() {
         let physicalDiameter = effectiveRadius * 2
-        // 5% transparent margin around the fruit so physics bounds touch with a clean visual buffer
-        let visualDiameter = physicalDiameter * 0.95
+        // Scaled to 100% of physical diameter for flush, seamless contact boundaries
+        let visualDiameter = physicalDiameter * 1.00
         let texture = FruitNode.texture(for: fruitType, diameter: visualDiameter)
 
         let sprite = SKSpriteNode(texture: texture)
