@@ -4,13 +4,17 @@ import SpriteKit
 public struct ContentView: View {
     @StateObject private var gameState = GameState()
     @State private var scene: GameScene?
-    private let hudWidth: CGFloat = 210
+
+    private let landscapeHudWidth: CGFloat = 210
+    private let portraitHudHeight: CGFloat = 85
 
     public init() {}
 
     public var body: some View {
         GeometryReader { geometry in
-            ZStack(alignment: .leading) {
+            let isPortrait = geometry.size.width < geometry.size.height
+
+            ZStack(alignment: isPortrait ? .top : .leading) {
                 // Background
                 LinearGradient(
                     colors: [
@@ -31,9 +35,10 @@ public struct ContentView: View {
                     .ignoresSafeArea()
                 }
 
-                // Left HUD Sidebar (Scores, Next Fruit, Evolution Guide, Shake, Controls)
+                // HUD Bar (Top bar in Portrait, Left sidebar in Landscape)
                 HUDView(
                     gameState: gameState,
+                    isPortrait: isPortrait,
                     onShake: {
                         scene?.shakeBoard()
                     },
@@ -41,7 +46,7 @@ public struct ContentView: View {
                         restartGame()
                     }
                 )
-                .ignoresSafeArea(edges: [.leading, .top, .bottom])
+                .ignoresSafeArea(edges: isPortrait ? [.top, .horizontal] : [.leading, .top, .bottom])
 
                 // Start Screen Overlay
                 if gameState.phase == .ready {
@@ -60,11 +65,12 @@ public struct ContentView: View {
                 }
             }
             .onAppear {
-                setupScene(size: geometry.size)
+                setupScene(size: geometry.size, isPortrait: isPortrait)
                 configureMotionShake()
             }
             .onChange(of: geometry.size) { newSize in
-                setupScene(size: newSize)
+                let newIsPortrait = newSize.width < newSize.height
+                setupScene(size: newSize, isPortrait: newIsPortrait)
             }
         }
         .statusBarHidden(true)
@@ -83,11 +89,11 @@ public struct ContentView: View {
                 .ignoresSafeArea()
 
             VStack(spacing: 16) {
-                Text("🍉 FRUIT MERGE 🍇")
-                    .font(.system(size: 28, weight: .black, design: .rounded))
+                Text("🍉 FRUIT MERGE 🍋")
+                    .font(.system(size: 26, weight: .black, design: .rounded))
                     .foregroundColor(.white)
 
-                Text("Drag anywhere to aim horizontally and release to drop fruits.\nCombine matching fruits to evolve them all the way to a Watermelon!\nShake your iPad or tap SHAKE BOARD anytime to jiggle the fruits.")
+                Text("Drag anywhere to aim horizontally and release to drop fruits.\nCombine matching fruits to evolve them all the way to a Watermelon!\nShake your device or tap SHAKE BOARD to jiggle the fruits.")
                     .font(.system(size: 13.5, weight: .medium, design: .rounded))
                     .multilineTextAlignment(.center)
                     .foregroundColor(.white.opacity(0.85))
@@ -114,7 +120,7 @@ public struct ContentView: View {
                         .shadow(color: Color.orange.opacity(0.4), radius: 10, y: 4)
                 }
             }
-            .padding(28)
+            .padding(26)
             .background(
                 RoundedRectangle(cornerRadius: 24, style: .continuous)
                     .fill(Color(red: 0.11, green: 0.13, blue: 0.20))
@@ -123,20 +129,22 @@ public struct ContentView: View {
                             .stroke(Color.white.opacity(0.15), lineWidth: 1.5)
                     )
             )
-            .padding(.horizontal, 40)
+            .padding(.horizontal, 32)
         }
     }
 
-    private func setupScene(size: CGSize) {
+    private func setupScene(size: CGSize, isPortrait: Bool) {
         guard size.width > 0 && size.height > 0 else { return }
+        let hudOffset = isPortrait ? portraitHudHeight : landscapeHudWidth
 
         if let existing = scene {
-            existing.updateLayout(size: size, leftOffset: hudWidth)
+            existing.updateLayout(size: size, isPortrait: isPortrait, hudOffset: hudOffset)
         } else {
             let newScene = GameScene(size: size)
             newScene.scaleMode = .resizeFill
             newScene.gameState = gameState
-            newScene.leftHudOffset = hudWidth
+            newScene.isPortrait = isPortrait
+            newScene.hudOffset = hudOffset
             self.scene = newScene
         }
     }

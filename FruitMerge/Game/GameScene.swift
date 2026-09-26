@@ -4,8 +4,10 @@ import SwiftUI
 public final class GameScene: SKScene, SKPhysicsContactDelegate {
     public weak var gameState: GameState?
 
-    // Scene dimensions & layout
-    public var leftHudOffset: CGFloat = 220
+    // Scene dimensions & orientation
+    public var isPortrait: Bool = false
+    public var hudOffset: CGFloat = 210
+
     private var containerWidth: CGFloat = 0
     private var containerHeight: CGFloat = 0
     private var containerOriginX: CGFloat = 0
@@ -37,7 +39,7 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
         setupContainer()
         setupDangerLine()
         setupDropGuide()
-        prefillWithTier1Fruits()
+        prefillBox()
         prepareDropFruit()
     }
 
@@ -54,14 +56,16 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
         addChild(effectLayer)
     }
 
-    public func updateLayout(size: CGSize, leftOffset: CGFloat) {
+    public func updateLayout(size: CGSize, isPortrait: Bool, hudOffset: CGFloat) {
         self.size = size
-        self.leftHudOffset = leftOffset
+        self.isPortrait = isPortrait
+        self.hudOffset = hudOffset
+
         setupLayers()
         setupContainer()
         setupDangerLine()
         setupDropGuide()
-        prefillWithTier1Fruits()
+        prefillBox()
         prepareDropFruit()
     }
 
@@ -70,43 +74,56 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
         effectLayer.removeAllChildren()
         canDrop = true
         isAiming = false
-        prefillWithTier1Fruits()
+        prefillBox()
         prepareDropFruit()
     }
 
-    /// Pre-fills roughly 1/4 of the box with Tier 1 (Red Currant) fruits on game start
-    public func prefillWithTier1Fruits() {
+    /// Pre-fills ~1/4 of the square box with a varied mix of fruit tiers (Red Currant up to Apple)
+    /// without placing identical fruits directly adjacent to each other (preventing auto-merging on game start)
+    public func prefillBox() {
         fruitLayer.removeAllChildren()
 
-        let radius = FruitType.redCurrant.radius
-        let diameter = radius * 2
-        let margin: CGFloat = 8
-        let startX = containerOriginX + radius + margin
-        let endX = containerOriginX + containerWidth - radius - margin
-        let startY = containerBottomY + radius + margin
-        let targetFillHeight = containerHeight * 0.25
-        let maxY = containerBottomY + targetFillHeight
+        let allowedTiers: [FruitType] = [
+            .redCurrant, .blueberry, .lemon, .purpleGrapeBunch, .orange, .apple
+        ]
 
-        var y = startY
-        var rowIndex = 0
+        let targetFillHeight = containerHeight * 0.28
+        let maxY = containerBottomY + targetFillHeight
+        let margin: CGFloat = 10
+
+        var y = containerBottomY + 20
+        var lastRowTiers: [FruitType] = []
 
         while y <= maxY {
-            let rowOffset = (rowIndex % 2 == 1) ? radius : 0
-            var x = startX + rowOffset
+            var x = containerOriginX + margin + 14
+            var currentRowTiers: [FruitType] = []
+            var lastTierInRow: FruitType? = nil
 
-            while x <= endX {
-                let fruit = FruitNode(fruitType: .redCurrant)
+            while x <= (containerOriginX + containerWidth - margin - 14) {
+                // Pick a tier that doesn't match the immediate left or below neighbor
+                let colIndex = currentRowTiers.count
+                let belowTier = (colIndex < lastRowTiers.count) ? lastRowTiers[colIndex] : nil
+
+                let candidateTiers = allowedTiers.filter { tier in
+                    tier != lastTierInRow && tier != belowTier
+                }
+                let chosenTier = candidateTiers.randomElement() ?? allowedTiers.randomElement() ?? .redCurrant
+
+                let fruit = FruitNode(fruitType: chosenTier)
                 let jitterX = CGFloat.random(in: -2...2)
                 let jitterY = CGFloat.random(in: -1...1)
                 fruit.position = CGPoint(x: x + jitterX, y: y + jitterY)
                 fruit.physicsBody?.isDynamic = true
                 fruitLayer.addChild(fruit)
 
-                x += diameter + 3
+                currentRowTiers.append(chosenTier)
+                lastTierInRow = chosenTier
+
+                x += (chosenTier.radius * 2) + 4
             }
 
-            y += diameter * 0.88
-            rowIndex += 1
+            lastRowTiers = currentRowTiers
+            y += 34
         }
     }
 
@@ -155,17 +172,40 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
     private func setupContainer() {
         containerNode.removeAllChildren()
 
-        let horizontalRightPadding: CGFloat = 20
-        let horizontalLeftPadding = leftHudOffset + 12
+        if isPortrait {
+            // Portrait Layout: HUD is on top
+            let topPadding = hudOffset + 12
+            let availableWidth = max(240, size.width - 36)
+            let availableHeight = max(240, size.height - topPadding - 36)
+            let baseSize = min(availableWidth, availableHeight)
+            // 25% smaller square box
+            let boxSize = baseSize * 0.75
 
-        containerOriginX = horizontalLeftPadding
-        containerWidth = max(280, size.width - containerOriginX - horizontalRightPadding)
-        containerHeight = size.height * 0.78
-        containerBottomY = size.height * 0.06
-        dropZoneY = containerBottomY + containerHeight + 20
-        dangerLineY = containerBottomY + containerHeight - 12
+            containerWidth = boxSize
+            containerHeight = boxSize
+            containerOriginX = (size.width - boxSize) / 2
+            containerBottomY = 28
+            dropZoneY = containerBottomY + containerHeight + 22
+            dangerLineY = containerBottomY + containerHeight - 12
+        } else {
+            // Landscape Layout: HUD is on left
+            let leftPadding = hudOffset + 16
+            let availableWidth = max(240, size.width - leftPadding - 36)
+            let availableHeight = max(240, size.height * 0.88)
+            let baseSize = min(availableWidth, availableHeight)
+            // 25% smaller square box
+            let boxSize = baseSize * 0.75
 
-        // Visual Box Background
+            containerWidth = boxSize
+            containerHeight = boxSize
+            let centerX = leftPadding + (size.width - leftPadding) / 2
+            containerOriginX = centerX - (boxSize / 2)
+            containerBottomY = (size.height - boxSize) / 2 - 12
+            dropZoneY = containerBottomY + containerHeight + 22
+            dangerLineY = containerBottomY + containerHeight - 12
+        }
+
+        // Visual Square Background
         let backgroundRect = CGRect(
             x: containerOriginX,
             y: containerBottomY,
@@ -292,7 +332,7 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
         let location = touch.location(in: self)
 
         // Only begin aiming if touch is within or near container horizontal area
-        if location.x >= (containerOriginX - 30) {
+        if location.x >= (containerOriginX - 30) && location.x <= (containerOriginX + containerWidth + 30) {
             isAiming = true
             updateAimPosition(location.x)
         }

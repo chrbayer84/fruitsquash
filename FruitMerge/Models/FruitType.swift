@@ -4,7 +4,7 @@ import SpriteKit
 public enum FruitType: Int, CaseIterable, Identifiable, Comparable {
     case redCurrant = 0
     case blueberry
-    case lime
+    case lemon
     case purpleGrapeBunch
     case orange
     case apple
@@ -24,7 +24,7 @@ public enum FruitType: Int, CaseIterable, Identifiable, Comparable {
         switch self {
         case .redCurrant: return "Red Currant"
         case .blueberry: return "Blueberry"
-        case .lime: return "Lime"
+        case .lemon: return "Lemon"
         case .purpleGrapeBunch: return "Purple Grapes"
         case .orange: return "Orange"
         case .apple: return "Apple"
@@ -41,7 +41,7 @@ public enum FruitType: Int, CaseIterable, Identifiable, Comparable {
         switch self {
         case .redCurrant: return "fruit_red_currant"
         case .blueberry: return "fruit_blueberry"
-        case .lime: return "fruit_lime"
+        case .lemon: return "fruit_lemon"
         case .purpleGrapeBunch: return "fruit_grape_bunch"
         case .orange: return "fruit_orange"
         case .apple: return "fruit_apple"
@@ -58,7 +58,7 @@ public enum FruitType: Int, CaseIterable, Identifiable, Comparable {
         switch self {
         case .redCurrant: return "🔴"
         case .blueberry: return "🫐"
-        case .lime: return "🍈"
+        case .lemon: return "🍋"
         case .purpleGrapeBunch: return "🍇"
         case .orange: return "🍊"
         case .apple: return "🍎"
@@ -73,17 +73,17 @@ public enum FruitType: Int, CaseIterable, Identifiable, Comparable {
     /// Base radius in points for SpriteKit physics and visual bounds
     public var radius: CGFloat {
         switch self {
-        case .redCurrant: return 12
-        case .blueberry: return 17
-        case .lime: return 23
-        case .purpleGrapeBunch: return 30
-        case .orange: return 38
-        case .apple: return 47
-        case .peach: return 57
-        case .coconut: return 68
-        case .dragonfruit: return 80
-        case .pineapple: return 93
-        case .watermelon: return 108
+        case .redCurrant: return 13.2
+        case .blueberry: return 18.7
+        case .lemon: return 25.3
+        case .purpleGrapeBunch: return 33.0
+        case .orange: return 41.8
+        case .apple: return 51.7
+        case .peach: return 62.7
+        case .coconut: return 74.8
+        case .dragonfruit: return 88.0
+        case .pineapple: return 102.3
+        case .watermelon: return 118.8
         }
     }
 
@@ -92,7 +92,7 @@ public enum FruitType: Int, CaseIterable, Identifiable, Comparable {
         switch self {
         case .redCurrant: return SKColor(red: 0.92, green: 0.10, blue: 0.18, alpha: 1.0)
         case .blueberry: return SKColor(red: 0.20, green: 0.35, blue: 0.92, alpha: 1.0)
-        case .lime: return SKColor(red: 0.40, green: 0.85, blue: 0.15, alpha: 1.0)
+        case .lemon: return SKColor(red: 1.00, green: 0.88, blue: 0.12, alpha: 1.0)
         case .purpleGrapeBunch: return SKColor(red: 0.60, green: 0.22, blue: 0.82, alpha: 1.0)
         case .orange: return SKColor(red: 1.00, green: 0.52, blue: 0.08, alpha: 1.0)
         case .apple: return SKColor(red: 0.92, green: 0.16, blue: 0.18, alpha: 1.0)
@@ -114,7 +114,7 @@ public enum FruitType: Int, CaseIterable, Identifiable, Comparable {
         switch self {
         case .redCurrant: return Color(red: 0.65, green: 0.05, blue: 0.12)
         case .blueberry: return Color(red: 0.12, green: 0.20, blue: 0.65)
-        case .lime: return Color(red: 0.25, green: 0.65, blue: 0.10)
+        case .lemon: return Color(red: 0.85, green: 0.70, blue: 0.05)
         case .purpleGrapeBunch: return Color(red: 0.40, green: 0.12, blue: 0.60)
         case .orange: return Color(red: 0.85, green: 0.38, blue: 0.05)
         case .apple: return Color(red: 0.70, green: 0.08, blue: 0.10)
@@ -131,7 +131,7 @@ public enum FruitType: Int, CaseIterable, Identifiable, Comparable {
         switch self {
         case .redCurrant: return 2
         case .blueberry: return 4
-        case .lime: return 8
+        case .lemon: return 8
         case .purpleGrapeBunch: return 16
         case .orange: return 32
         case .apple: return 64
@@ -153,7 +153,7 @@ public enum FruitType: Int, CaseIterable, Identifiable, Comparable {
 
     /// Pool of fruits that can be spawned for the player drop queue (Tiers 1 to 5)
     public static var spawnPool: [FruitType] {
-        [.redCurrant, .blueberry, .lime, .purpleGrapeBunch, .orange]
+        [.redCurrant, .blueberry, .lemon, .purpleGrapeBunch, .orange]
     }
 
     public static func randomSpawn() -> FruitType {
