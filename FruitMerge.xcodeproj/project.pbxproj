@@ -22,6 +22,7 @@
 		AA0000202D00000000000011 /* GameWonOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000102D00000000000011 /* GameWonOverlay.swift */; };
 		AA0000202D00000000000012 /* GameTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000102D00000000000012 /* GameTheme.swift */; };
 		AA0000202D00000000000013 /* GreenHillsBackgroundView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000102D00000000000013 /* GreenHillsBackgroundView.swift */; };
+		AA0000202D00000000000014 /* GameDebugConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000102D00000000000014 /* GameDebugConfig.swift */; };
 		AA0000202D0000000000000E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA0000102D0000000000000E /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
@@ -42,6 +43,7 @@
 		AA0000102D00000000000011 /* GameWonOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameWonOverlay.swift; sourceTree = "<group>"; };
 		AA0000102D00000000000012 /* GameTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameTheme.swift; sourceTree = "<group>"; };
 		AA0000102D00000000000013 /* GreenHillsBackgroundView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GreenHillsBackgroundView.swift; sourceTree = "<group>"; };
+		AA0000102D00000000000014 /* GameDebugConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameDebugConfig.swift; sourceTree = "<group>"; };
 		AA0000102D0000000000000E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		AA0000102D0000000000000F /* FruitMerge.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FruitMerge.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -85,6 +87,7 @@
 				AA0000102D00000000000003 /* FruitType.swift */,
 				AA0000102D00000000000004 /* GameState.swift */,
 				AA0000102D00000000000012 /* GameTheme.swift */,
+				AA0000102D00000000000014 /* GameDebugConfig.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -213,6 +216,7 @@
 				AA0000202D00000000000011 /* GameWonOverlay.swift in Sources */,
 				AA0000202D00000000000012 /* GameTheme.swift in Sources */,
 				AA0000202D00000000000013 /* GreenHillsBackgroundView.swift in Sources */,
+				AA0000202D00000000000014 /* GameDebugConfig.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

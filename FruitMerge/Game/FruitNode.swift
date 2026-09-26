@@ -40,8 +40,8 @@ public final class FruitNode: SKNode {
             case .dragonfruit:
                 drawWholeDragonfruit(in: rect, context: cgContext)
             case .pineapple:
-                // Rotated 45 degrees clockwise to straighten the green crown to the top of the ellipse
-                drawEmojiArtwork(emoji: fruitType.emoji, in: rect, context: cgContext, rotationAngle: .pi / 4)
+                // Rotated 45 degrees clockwise and shifted 25% to the right to center in the ellipse
+                drawEmojiArtwork(emoji: fruitType.emoji, in: rect, context: cgContext, rotationAngle: .pi / 4, offsetX: rect.width * 0.25)
             case .watermelon:
                 drawWholeWatermelon(in: rect, context: cgContext)
             default:
@@ -85,21 +85,38 @@ public final class FruitNode: SKNode {
         addChild(sprite)
         self.spriteNode = sprite
 
-        // Debug outline for pineapple physics collision boundary
-        if fruitType == .pineapple {
-            let physicsWidth = size.width * 0.90
-            let physicsHeight = size.height * 0.90
-            let ellipseRect = CGRect(
-                x: -physicsWidth / 2,
-                y: -physicsHeight / 2,
-                width: physicsWidth,
-                height: physicsHeight
-            )
-            let debugOutline = SKShapeNode(ellipseIn: ellipseRect)
-            debugOutline.name = "pineappleDebugOutline"
-            debugOutline.strokeColor = SKColor.systemYellow
-            debugOutline.lineWidth = 2.0
-            debugOutline.fillColor = SKColor.yellow.withAlphaComponent(0.18)
+        // Global debug outline visualizing the exact transparent physics collision boundary for all fruit
+        if GameDebugConfig.showPhysicsOutlines {
+            let debugOutline: SKShapeNode
+
+            if fruitType == .dragonfruit {
+                let physicsWidth = size.width * 0.90
+                let physicsHeight = size.height * 0.90
+                let ellipseRect = CGRect(
+                    x: -physicsWidth / 2,
+                    y: -physicsHeight / 2,
+                    width: physicsWidth,
+                    height: physicsHeight
+                )
+                debugOutline = SKShapeNode(ellipseIn: ellipseRect)
+            } else if fruitType == .pineapple {
+                let physicsWidth = size.width * 0.90
+                let physicsHeight = size.height * 0.90
+                let ellipseRect = CGRect(
+                    x: -physicsWidth / 2,
+                    y: -physicsHeight / 2,
+                    width: physicsWidth,
+                    height: physicsHeight
+                )
+                debugOutline = SKShapeNode(ellipseIn: ellipseRect)
+            } else {
+                debugOutline = SKShapeNode(circleOfRadius: size.width / 2)
+            }
+
+            debugOutline.name = "debugPhysicsOutline"
+            debugOutline.strokeColor = SKColor.systemYellow.withAlphaComponent(0.85)
+            debugOutline.lineWidth = 1.5
+            debugOutline.fillColor = SKColor.yellow.withAlphaComponent(0.12)
             debugOutline.zPosition = 15
             addChild(debugOutline)
         }
@@ -208,8 +225,8 @@ public final class FruitNode: SKNode {
             case .dragonfruit:
                 drawWholeDragonfruit(in: rect, context: cgContext)
             case .pineapple:
-                // Rotated 45 degrees clockwise to straighten the green crown to the top of the ellipse
-                drawEmojiArtwork(emoji: fruitType.emoji, in: rect, context: cgContext, rotationAngle: .pi / 4)
+                // Rotated 45 degrees clockwise and shifted 25% to the right to center in the ellipse
+                drawEmojiArtwork(emoji: fruitType.emoji, in: rect, context: cgContext, rotationAngle: .pi / 4, offsetX: rect.width * 0.25)
             case .watermelon:
                 drawWholeWatermelon(in: rect, context: cgContext)
             default:
@@ -678,10 +695,10 @@ public final class FruitNode: SKNode {
         context.fillEllipse(in: gloss)
     }
 
-    /// Draws full-bleed emoji graphic with optional rotation angle
-    private static func drawEmojiArtwork(emoji: String, in rect: CGRect, context: CGContext, rotationAngle: CGFloat = 0) {
+    /// Draws full-bleed emoji graphic with optional rotation angle and offset
+    private static func drawEmojiArtwork(emoji: String, in rect: CGRect, context: CGContext, rotationAngle: CGFloat = 0, offsetX: CGFloat = 0, offsetY: CGFloat = 0) {
         context.saveGState()
-        context.translateBy(x: rect.midX, y: rect.midY)
+        context.translateBy(x: rect.midX + offsetX, y: rect.midY + offsetY)
         if rotationAngle != 0 {
             context.rotate(by: rotationAngle)
         }
