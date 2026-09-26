@@ -345,6 +345,7 @@
 				DEVELOPMENT_ASSET_PATHS = "";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
+				DEVELOPMENT_TEAM = VR3HG6C7W9;
 				INFOPLIST_FILE = FruitMerge/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -372,6 +373,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "";
 				ENABLE_PREVIEWS = YES;
+				DEVELOPMENT_TEAM = VR3HG6C7W9;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = FruitMerge/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
