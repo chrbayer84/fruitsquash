@@ -31,6 +31,7 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
     private var previewFruitNode: FruitNode?
     private var dangerLineNode = SKShapeNode()
     private var crosshairNode = SKNode()
+    private var upgradeCrosshairNode = SKNode()
 
     // State
     private var canDrop: Bool = true
@@ -42,7 +43,7 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
     private var lastShakeTimestamp: TimeInterval = 0
 
     public override func didMove(to view: SKView) {
-        backgroundColor = SKColor(red: 0.07, green: 0.08, blue: 0.12, alpha: 1.0)
+        backgroundColor = .clear
         physicsWorld.gravity = CGVector(dx: 0, dy: -24.0)
         physicsWorld.contactDelegate = self
 
@@ -79,21 +80,20 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
 
     private func setupCrosshair() {
         crosshairNode.removeAllChildren()
+        upgradeCrosshairNode.removeAllChildren()
 
-        // Outer Reticle Ring
+        // 1. Bomb Reticle (Red)
         let ring = SKShapeNode(circleOfRadius: 22)
         ring.strokeColor = SKColor.systemRed
         ring.lineWidth = 2.5
         ring.fillColor = SKColor.systemRed.withAlphaComponent(0.12)
         crosshairNode.addChild(ring)
 
-        // Center dot
         let dot = SKShapeNode(circleOfRadius: 3.5)
         dot.fillColor = SKColor.systemYellow
         dot.strokeColor = .clear
         crosshairNode.addChild(dot)
 
-        // 4 crosshair tick lines
         let offsets: [(CGPoint, CGPoint)] = [
             (CGPoint(x: 0, y: 15), CGPoint(x: 0, y: 30)),
             (CGPoint(x: 0, y: -15), CGPoint(x: 0, y: -30)),
@@ -115,6 +115,34 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
         crosshairNode.isHidden = true
         if crosshairNode.parent == nil {
             effectLayer.addChild(crosshairNode)
+        }
+
+        // 2. Upgrade Reticle (Emerald Green & Gold)
+        let upRing = SKShapeNode(circleOfRadius: 24)
+        upRing.strokeColor = SKColor.systemGreen
+        upRing.lineWidth = 2.5
+        upRing.fillColor = SKColor.systemGreen.withAlphaComponent(0.15)
+        upgradeCrosshairNode.addChild(upRing)
+
+        let upArrow = SKShapeNode(circleOfRadius: 4)
+        upArrow.fillColor = SKColor.systemYellow
+        upArrow.strokeColor = .clear
+        upgradeCrosshairNode.addChild(upArrow)
+
+        for (start, end) in offsets {
+            let path = CGMutablePath()
+            path.move(to: start)
+            path.addLine(to: end)
+            let line = SKShapeNode(path: path)
+            line.strokeColor = SKColor.systemGreen
+            line.lineWidth = 2.5
+            upgradeCrosshairNode.addChild(line)
+        }
+
+        upgradeCrosshairNode.zPosition = 40
+        upgradeCrosshairNode.isHidden = true
+        if upgradeCrosshairNode.parent == nil {
+            effectLayer.addChild(upgradeCrosshairNode)
         }
     }
 
@@ -327,7 +355,8 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
             dangerLineY = containerBottomY + containerHeight - (12 * scaleFactor)
         }
 
-        // Visual Square Background
+        // Visual Square Background with Theme Tinting
+        let theme = gameState?.theme ?? .dark
         let backgroundRect = CGRect(
             x: containerOriginX,
             y: containerBottomY,
@@ -335,8 +364,9 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
             height: containerHeight
         )
         let backgroundBox = SKShapeNode(rect: backgroundRect, cornerRadius: 20)
-        backgroundBox.fillColor = SKColor(red: 0.11, green: 0.13, blue: 0.19, alpha: 0.95)
-        backgroundBox.strokeColor = SKColor.white.withAlphaComponent(0.18)
+        backgroundBox.name = "backgroundBox"
+        backgroundBox.fillColor = theme.skContainerFill
+        backgroundBox.strokeColor = theme.skContainerStroke
         backgroundBox.lineWidth = 2.5
         containerNode.addChild(backgroundBox)
 
@@ -379,6 +409,15 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
         let rightWallNode = SKNode()
         rightWallNode.physicsBody = rightWallBody
         containerNode.addChild(rightWallNode)
+    }
+
+    public func applyTheme(_ theme: GameTheme) {
+        if let box = containerNode.childNode(withName: "backgroundBox") as? SKShapeNode {
+            box.fillColor = theme.skContainerFill
+            box.strokeColor = theme.skContainerStroke
+        }
+        dangerLineNode.strokeColor = theme.skDangerLineColor
+        dropGuideLine.strokeColor = theme.skDropGuideColor
     }
 
     private func setupDangerLine() {
@@ -442,7 +481,8 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
 
         let dashedPath = path.copy(dashingWithPhase: 0, lengths: [4.0, 4.0])
         dropGuideLine.path = dashedPath
-        dropGuideLine.isHidden = !isAiming || (gameState?.isBombModeActive ?? false)
+        let isPowerUpActive = (gameState?.isBombModeActive ?? false) || (gameState?.isUpgradeModeActive ?? false)
+        dropGuideLine.isHidden = !isAiming || isPowerUpActive
     }
 
     private func clampedX(_ touchX: CGFloat, radius: CGFloat) -> CGFloat {
@@ -451,15 +491,25 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
         return min(max(touchX, minX), maxX)
     }
 
-    // MARK: - Touch Handling (Drop Aiming vs. Bomb Targeting)
+    // MARK: - Touch Handling (Drop Aiming vs. Bomb / Upgrade Targeting)
 
     public override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let touch = touches.first, !isRotating, gameState?.phase == .playing else { return }
         let location = touch.location(in: self)
 
+        if gameState?.isUpgradeModeActive == true {
+            upgradeCrosshairNode.position = location
+            upgradeCrosshairNode.isHidden = false
+            crosshairNode.isHidden = true
+            previewFruitNode?.isHidden = true
+            dropGuideLine.isHidden = true
+            return
+        }
+
         if gameState?.isBombModeActive == true {
             crosshairNode.position = location
             crosshairNode.isHidden = false
+            upgradeCrosshairNode.isHidden = true
             previewFruitNode?.isHidden = true
             dropGuideLine.isHidden = true
             return
@@ -475,6 +525,12 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
         guard let touch = touches.first, !isRotating, gameState?.phase == .playing else { return }
         let location = touch.location(in: self)
 
+        if gameState?.isUpgradeModeActive == true {
+            upgradeCrosshairNode.position = location
+            upgradeCrosshairNode.isHidden = false
+            return
+        }
+
         if gameState?.isBombModeActive == true {
             crosshairNode.position = location
             crosshairNode.isHidden = false
@@ -489,6 +545,12 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
     public override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let touch = touches.first, !isRotating, gameState?.phase == .playing else { return }
         let location = touch.location(in: self)
+
+        // UPGRADE MODE EXECUTION
+        if gameState?.isUpgradeModeActive == true {
+            handleUpgradeTargeting(at: location)
+            return
+        }
 
         // BOMB MODE EXECUTION
         if gameState?.isBombModeActive == true {
@@ -508,6 +570,94 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
         dropGuideLine.isHidden = true
         if !(gameState?.isBombModeActive ?? false) {
             crosshairNode.isHidden = true
+        }
+        if !(gameState?.isUpgradeModeActive ?? false) {
+            upgradeCrosshairNode.isHidden = true
+        }
+    }
+
+    private func handleUpgradeTargeting(at location: CGPoint) {
+        let hitNodes = nodes(at: location)
+        var targetFruit: FruitNode?
+
+        for node in hitNodes {
+            if let f = node as? FruitNode {
+                targetFruit = f
+                break
+            } else if let f = node.parent as? FruitNode {
+                targetFruit = f
+                break
+            }
+        }
+
+        if let fruit = targetFruit {
+            if fruit.fruitType == .watermelon {
+                // Watermelon cannot be upgraded further - play wobble feedback
+                let wobble = SKAction.sequence([
+                    .rotate(byAngle: -0.12, duration: 0.05),
+                    .rotate(byAngle: 0.24, duration: 0.05),
+                    .rotate(byAngle: -0.12, duration: 0.05)
+                ])
+                fruit.run(wobble)
+                HapticManager.shared.buttonTapFeedback(enabled: gameState?.isHapticsEnabled ?? true)
+            } else if let nextTier = fruit.fruitType.nextTier {
+                upgradeFruit(fruit, to: nextTier)
+            }
+        } else {
+            // If tapped outside container, cancel upgrade mode
+            if location.x < containerOriginX || location.x > (containerOriginX + containerWidth) || location.y < containerBottomY {
+                gameState?.deactivateUpgradeMode()
+                upgradeCrosshairNode.isHidden = true
+                prepareDropFruit()
+            }
+        }
+    }
+
+    /// Upgrades a single selected fruit to its next evolution tier
+    private func upgradeFruit(_ fruit: FruitNode, to nextTier: FruitType) {
+        guard let state = gameState else { return }
+        let pos = fruit.position
+
+        // 1. Sparkle evolution particles
+        let sparkColors: [SKColor] = [.systemYellow, .systemGreen, .white]
+        for _ in 0..<20 {
+            let spark = SKShapeNode(circleOfRadius: CGFloat.random(in: 3...6))
+            spark.fillColor = sparkColors.randomElement() ?? .systemYellow
+            spark.strokeColor = .clear
+            spark.position = pos
+            spark.zPosition = 33
+            effectLayer.addChild(spark)
+
+            let angle = CGFloat.random(in: 0...(2 * .pi))
+            let distance = CGFloat.random(in: 20...60) * scaleFactor
+            let dest = CGPoint(x: pos.x + cos(angle) * distance, y: pos.y + sin(angle) * distance)
+
+            let move = SKAction.move(to: dest, duration: 0.30)
+            move.timingMode = .easeOut
+            let fade = SKAction.fadeOut(withDuration: 0.30)
+            let shrink = SKAction.scale(to: 0.1, duration: 0.30)
+            spark.run(SKAction.sequence([SKAction.group([move, fade, shrink]), SKAction.removeFromParent()]))
+        }
+
+        // 2. Replace with upgraded fruit
+        fruit.removeFromParent()
+        let upgradedFruit = FruitNode(fruitType: nextTier, scale: scaleFactor)
+        upgradedFruit.position = pos
+        fruitLayer.addChild(upgradedFruit)
+        upgradedFruit.playSpawnAnimation()
+
+        // 3. Audio & Haptics
+        AudioManager.shared.playMergeSound(for: nextTier, isMuted: state.isMuted)
+        HapticManager.shared.mergeFeedback(tier: nextTier, enabled: state.isHapticsEnabled)
+
+        // 4. Deactivate Upgrade Mode and re-enable drop preview
+        state.deactivateUpgradeMode()
+        upgradeCrosshairNode.isHidden = true
+
+        let wait = SKAction.wait(forDuration: 0.25)
+        run(wait) { [weak self] in
+            guard let self = self, self.gameState?.phase == .playing else { return }
+            self.prepareDropFruit()
         }
     }
 

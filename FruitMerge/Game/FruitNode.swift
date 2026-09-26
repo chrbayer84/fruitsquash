@@ -39,6 +39,8 @@ public final class FruitNode: SKNode {
                 drawRoundGrapeBunch(in: rect, context: cgContext)
             case .dragonfruit:
                 drawWholeDragonfruit(in: rect, context: cgContext)
+            case .watermelon:
+                drawWholeWatermelon(in: rect, context: cgContext)
             default:
                 drawEmojiArtwork(emoji: fruitType.emoji, in: rect, context: cgContext)
             }
@@ -86,7 +88,7 @@ public final class FruitNode: SKNode {
         let body: SKPhysicsBody
 
         if fruitType == .dragonfruit {
-            // Invisible physics shape is 10% smaller to let surrounding fruits get closer to scales and margins
+            // Invisible physics shape is 10% smaller (aspect ratio 1.0 : 1.5)
             let physicsWidth = size.width * 0.90
             let physicsHeight = size.height * 0.90
             let ellipseRect = CGRect(
@@ -98,7 +100,7 @@ public final class FruitNode: SKNode {
             let path = CGPath(ellipseIn: ellipseRect, transform: nil)
             body = SKPhysicsBody(polygonFrom: path)
         } else if fruitType == .pineapple {
-            // Invisible physics shape is 20% smaller to snuggly fit crown leaves and body
+            // Invisible physics shape is 20% smaller (aspect ratio 1.0 : 1.5)
             let physicsWidth = size.width * 0.80
             let physicsHeight = size.height * 0.80
             let ellipseRect = CGRect(
@@ -109,17 +111,8 @@ public final class FruitNode: SKNode {
             )
             let path = CGPath(ellipseIn: ellipseRect, transform: nil)
             body = SKPhysicsBody(polygonFrom: path)
-        } else if fruitType == .watermelon {
-            // Elliptical rigid body matching natural oblong watermelon slice profile
-            let ellipseRect = CGRect(
-                x: -size.width / 2,
-                y: -size.height / 2,
-                width: size.width,
-                height: size.height
-            )
-            let path = CGPath(ellipseIn: ellipseRect, transform: nil)
-            body = SKPhysicsBody(polygonFrom: path)
         } else {
+            // Whole round watermelon and all standard circular fruits
             body = SKPhysicsBody(circleOfRadius: size.width / 2)
         }
 
@@ -192,6 +185,8 @@ public final class FruitNode: SKNode {
                 drawRoundGrapeBunch(in: rect, context: cgContext)
             case .dragonfruit:
                 drawWholeDragonfruit(in: rect, context: cgContext)
+            case .watermelon:
+                drawWholeWatermelon(in: rect, context: cgContext)
             default:
                 drawEmojiArtwork(emoji: fruitType.emoji, in: rect, context: cgContext)
             }
@@ -573,6 +568,87 @@ public final class FruitNode: SKNode {
             y: fruitRect.minY + fruitRect.height * 0.18,
             width: fruitRect.width * 0.32,
             height: fruitRect.height * 0.20
+        )
+        context.fillEllipse(in: gloss)
+    }
+
+    /// Draws a whole round green watermelon with yellow-green wavy stripes
+    private static func drawWholeWatermelon(in rect: CGRect, context: CGContext) {
+        let melonRect = rect
+
+        // Dark forest green base radial gradient
+        let colorSpace = CGColorSpaceCreateDeviceRGB()
+        let greenColors = [
+            UIColor(red: 0.16, green: 0.52, blue: 0.18, alpha: 1.0).cgColor,
+            UIColor(red: 0.10, green: 0.38, blue: 0.12, alpha: 1.0).cgColor,
+            UIColor(red: 0.05, green: 0.22, blue: 0.07, alpha: 1.0).cgColor
+        ] as CFArray
+        let locations: [CGFloat] = [0.0, 0.60, 1.0]
+
+        if let gradient = CGGradient(colorsSpace: colorSpace, colors: greenColors, locations: locations) {
+            context.saveGState()
+            context.addEllipse(in: melonRect)
+            context.clip()
+
+            let center = CGPoint(x: melonRect.midX - melonRect.width * 0.15, y: melonRect.midY - melonRect.height * 0.15)
+            context.drawRadialGradient(
+                gradient,
+                startCenter: center,
+                startRadius: 0,
+                endCenter: CGPoint(x: melonRect.midX, y: melonRect.midY),
+                endRadius: melonRect.width * 0.55,
+                options: [.drawsAfterEndLocation]
+            )
+            context.restoreGState()
+        }
+
+        // Distinct wavy light-green meridian stripes
+        context.saveGState()
+        context.addEllipse(in: melonRect)
+        context.clip()
+
+        let stripeColor = UIColor(red: 0.62, green: 0.88, blue: 0.15, alpha: 0.88).cgColor
+        context.setStrokeColor(stripeColor)
+        context.setLineCap(.round)
+
+        let stripeCount = 7
+        for i in 0..<stripeCount {
+            let t = CGFloat(i) / CGFloat(stripeCount - 1)
+            let xOffset = (t - 0.5) * melonRect.width * 0.85
+            let stripeWidth = max(melonRect.width * 0.055, melonRect.width * (0.085 - abs(t - 0.5) * 0.07))
+            context.setLineWidth(stripeWidth)
+
+            let path = CGMutablePath()
+            let topPt = CGPoint(x: melonRect.midX + xOffset * 0.3, y: melonRect.minY + melonRect.height * 0.04)
+            let midPt = CGPoint(x: melonRect.midX + xOffset, y: melonRect.midY)
+            let botPt = CGPoint(x: melonRect.midX + xOffset * 0.3, y: melonRect.maxY - melonRect.height * 0.04)
+
+            path.move(to: topPt)
+            path.addQuadCurve(to: midPt, control: CGPoint(x: melonRect.midX + xOffset * 0.7, y: melonRect.height * 0.28))
+            path.addQuadCurve(to: botPt, control: CGPoint(x: melonRect.midX + xOffset * 0.7, y: melonRect.height * 0.72))
+            context.addPath(path)
+            context.strokePath()
+        }
+        context.restoreGState()
+
+        // Top stem node
+        context.setFillColor(UIColor(red: 0.38, green: 0.25, blue: 0.12, alpha: 1.0).cgColor)
+        let stemSize = melonRect.width * 0.10
+        let stemRect = CGRect(
+            x: melonRect.midX - stemSize / 2,
+            y: melonRect.minY,
+            width: stemSize,
+            height: stemSize * 0.65
+        )
+        context.fillEllipse(in: stemRect)
+
+        // Spherical gloss highlight
+        context.setFillColor(UIColor.white.withAlphaComponent(0.40).cgColor)
+        let gloss = CGRect(
+            x: melonRect.minX + melonRect.width * 0.18,
+            y: melonRect.minY + melonRect.height * 0.14,
+            width: melonRect.width * 0.30,
+            height: melonRect.height * 0.20
         )
         context.fillEllipse(in: gloss)
     }

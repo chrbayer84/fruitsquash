@@ -15,16 +15,9 @@ public struct ContentView: View {
             let isPortrait = geometry.size.width < geometry.size.height
 
             ZStack(alignment: isPortrait ? .top : .leading) {
-                // Background
-                LinearGradient(
-                    colors: [
-                        Color(red: 0.07, green: 0.08, blue: 0.13),
-                        Color(red: 0.03, green: 0.04, blue: 0.07)
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .ignoresSafeArea()
+                // Dynamic Theme Background
+                themeBackgroundView
+                    .ignoresSafeArea()
 
                 // Fullscreen SpriteKit Game View
                 if let scene = scene {
@@ -83,9 +76,38 @@ public struct ContentView: View {
                 let newIsPortrait = newSize.width < newSize.height
                 setupScene(size: newSize, isPortrait: newIsPortrait)
             }
+            .onChange(of: gameState.theme) { newTheme in
+                scene?.applyTheme(newTheme)
+            }
         }
         .statusBarHidden(true)
         .persistentSystemOverlays(.hidden)
+    }
+
+    @ViewBuilder
+    private var themeBackgroundView: some View {
+        switch gameState.theme {
+        case .dark:
+            LinearGradient(
+                colors: [
+                    Color(red: 0.07, green: 0.08, blue: 0.13),
+                    Color(red: 0.03, green: 0.04, blue: 0.07)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        case .light:
+            LinearGradient(
+                colors: [
+                    Color(red: 0.95, green: 0.97, blue: 1.0),
+                    Color(red: 0.88, green: 0.91, blue: 0.96)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        case .greenHills:
+            GreenHillsBackgroundView()
+        }
     }
 
     private func configureMotionShake() {
@@ -151,6 +173,7 @@ public struct ContentView: View {
 
         if let existing = scene {
             existing.updateLayout(size: size, isPortrait: isPortrait, hudOffset: hudOffset)
+            existing.applyTheme(gameState.theme)
         } else {
             let newScene = GameScene(size: size)
             newScene.scaleMode = .resizeFill
