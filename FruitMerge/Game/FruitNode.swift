@@ -40,8 +40,8 @@ public final class FruitNode: SKNode {
             case .dragonfruit:
                 drawWholeDragonfruit(in: rect, context: cgContext)
             case .pineapple:
-                // Rotated 45 degrees clockwise and shifted 25% to the right to center in the ellipse
-                drawEmojiArtwork(emoji: fruitType.emoji, in: rect, context: cgContext, rotationAngle: .pi / 4, offsetX: rect.width * 0.25)
+                // Rotated 35 degrees (10 degrees counter-clockwise from 45) to align with vertical ellipse
+                drawEmojiArtwork(emoji: fruitType.emoji, in: rect, context: cgContext, rotationAngle: 35.0 * .pi / 180.0, offsetX: rect.width * 0.20)
             case .watermelon:
                 drawWholeWatermelon(in: rect, context: cgContext)
             default:
@@ -225,8 +225,8 @@ public final class FruitNode: SKNode {
             case .dragonfruit:
                 drawWholeDragonfruit(in: rect, context: cgContext)
             case .pineapple:
-                // Rotated 45 degrees clockwise and shifted 25% to the right to center in the ellipse
-                drawEmojiArtwork(emoji: fruitType.emoji, in: rect, context: cgContext, rotationAngle: .pi / 4, offsetX: rect.width * 0.25)
+                // Rotated 35 degrees (10 degrees counter-clockwise from 45) to align with vertical ellipse
+                drawEmojiArtwork(emoji: fruitType.emoji, in: rect, context: cgContext, rotationAngle: 35.0 * .pi / 180.0, offsetX: rect.width * 0.20)
             case .watermelon:
                 drawWholeWatermelon(in: rect, context: cgContext)
             default:
