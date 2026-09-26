@@ -39,6 +39,9 @@ public final class FruitNode: SKNode {
                 drawRoundGrapeBunch(in: rect, context: cgContext)
             case .dragonfruit:
                 drawWholeDragonfruit(in: rect, context: cgContext)
+            case .pineapple:
+                // Rotated 45 degrees clockwise to straighten the green crown to the top of the ellipse
+                drawEmojiArtwork(emoji: fruitType.emoji, in: rect, context: cgContext, rotationAngle: .pi / 4)
             case .watermelon:
                 drawWholeWatermelon(in: rect, context: cgContext)
             default:
@@ -213,6 +216,9 @@ public final class FruitNode: SKNode {
                 drawRoundGrapeBunch(in: rect, context: cgContext)
             case .dragonfruit:
                 drawWholeDragonfruit(in: rect, context: cgContext)
+            case .pineapple:
+                // Rotated 45 degrees clockwise to straighten the green crown to the top of the ellipse
+                drawEmojiArtwork(emoji: fruitType.emoji, in: rect, context: cgContext, rotationAngle: .pi / 4)
             case .watermelon:
                 drawWholeWatermelon(in: rect, context: cgContext)
             default:
@@ -681,10 +687,16 @@ public final class FruitNode: SKNode {
         context.fillEllipse(in: gloss)
     }
 
-    /// Draws full-bleed emoji graphic scaled to fill the entire square boundary
-    private static func drawEmojiArtwork(emoji: String, in rect: CGRect, context: CGContext) {
+    /// Draws full-bleed emoji graphic with optional rotation angle
+    private static func drawEmojiArtwork(emoji: String, in rect: CGRect, context: CGContext, rotationAngle: CGFloat = 0) {
+        context.saveGState()
+        context.translateBy(x: rect.midX, y: rect.midY)
+        if rotationAngle != 0 {
+            context.rotate(by: rotationAngle)
+        }
+
         let string = NSString(string: emoji)
-        let fontSize = rect.width * 0.96
+        let fontSize = max(rect.width, rect.height) * 0.96
         let font = UIFont.systemFont(ofSize: fontSize)
 
         let attributes: [NSAttributedString.Key: Any] = [
@@ -693,12 +705,13 @@ public final class FruitNode: SKNode {
 
         let textSize = string.size(withAttributes: attributes)
         let textRect = CGRect(
-            x: rect.midX - (textSize.width / 2),
-            y: rect.midY - (textSize.height / 2),
+            x: -(textSize.width / 2),
+            y: -(textSize.height / 2),
             width: textSize.width,
             height: textSize.height
         )
 
         string.draw(in: textRect, withAttributes: attributes)
+        context.restoreGState()
     }
 }
