@@ -87,11 +87,11 @@ public enum FruitType: Int, CaseIterable, Identifiable, Comparable {
         }
     }
 
-    /// Aspect ratio (width / height) - Dragonfruit and Pineapple are oblong ellipses (1.0 width : 1.5 height)
+    /// Aspect ratio (width / height) - Dragonfruit (1.0 : 1.5) and Pineapple (1.0 : 1.8) are vertical oblong ellipses
     public var aspectRatio: CGFloat {
         switch self {
-        case .dragonfruit: return 1.0 / 1.5 // 0.6667
-        case .pineapple: return 1.0 / 1.5   // 0.6667
+        case .dragonfruit: return 1.0 / 1.5 // 0.6667 (1.5x height)
+        case .pineapple: return 1.0 / 1.8   // 0.5556 (1.8x height with top crown)
         default: return 1.0
         }
     }
@@ -105,8 +105,8 @@ public enum FruitType: Int, CaseIterable, Identifiable, Comparable {
             let h = w * 1.5 // exactly 1.5x height
             return CGSize(width: w, height: h)
         case .pineapple:
-            let w = baseR * 1.70
-            let h = w * 1.5 // exactly 1.5x height
+            let w = baseR * 1.50
+            let h = w * 1.8 // exactly 1.8x height with green crown on top
             return CGSize(width: w, height: h)
         case .watermelon:
             // Whole round watermelon (circular 1:1)
