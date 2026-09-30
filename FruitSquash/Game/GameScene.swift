@@ -7,7 +7,9 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
     // Scene dimensions & orientation
     public var isPortrait: Bool = false
     public var hudOffset: CGFloat = 210
-    public var scaleFactor: CGFloat { 1.0 }
+    public var isPhone: Bool { UIDevice.current.userInterfaceIdiom == .phone }
+    // 50% scale on iPhone to provide ample usable area, 100% scale on iPad
+    public var scaleFactor: CGFloat { isPhone ? 0.50 : 1.0 }
 
     private var containerWidth: CGFloat = 0
     private var containerHeight: CGFloat = 0
