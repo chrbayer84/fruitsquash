@@ -299,10 +299,10 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
                 continue
             }
 
-            let impulseX = CGFloat.random(in: -65...65) * scaleFactor
-            let impulseY = CGFloat.random(in: 40...130) * scaleFactor
-            body.applyImpulse(CGVector(dx: impulseX, dy: impulseY))
-            body.applyAngularImpulse(CGFloat.random(in: -0.04...0.04))
+        let impulseX = CGFloat.random(in: -45...45) * scaleFactor
+        let impulseY = CGFloat.random(in: 25...85) * scaleFactor
+        body.applyImpulse(CGVector(dx: impulseX, dy: impulseY))
+        body.applyAngularImpulse(CGFloat.random(in: -0.04...0.04))
         }
 
         let shakeSequence = SKAction.sequence([
@@ -386,10 +386,11 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
         floorNode.physicsBody = floorBody
         containerNode.addChild(floorNode)
 
-        // Physics Left Wall
+        // Physics Left Wall (extends well above the drop zone to prevent fruit from escaping)
+        let wallHeight = max(size.height, containerHeight * 2.5)
         let leftWallBody = SKPhysicsBody(
             edgeFrom: CGPoint(x: containerOriginX, y: containerBottomY),
-            to: CGPoint(x: containerOriginX, y: containerBottomY + containerHeight + 80)
+            to: CGPoint(x: containerOriginX, y: containerBottomY + wallHeight)
         )
         leftWallBody.categoryBitMask = CollisionCategory.wall
         leftWallBody.collisionBitMask = CollisionCategory.fruit
@@ -399,10 +400,10 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
         leftWallNode.physicsBody = leftWallBody
         containerNode.addChild(leftWallNode)
 
-        // Physics Right Wall
+        // Physics Right Wall (extends well above the drop zone to prevent fruit from escaping)
         let rightWallBody = SKPhysicsBody(
             edgeFrom: CGPoint(x: containerOriginX + containerWidth, y: containerBottomY),
-            to: CGPoint(x: containerOriginX + containerWidth, y: containerBottomY + containerHeight + 80)
+            to: CGPoint(x: containerOriginX + containerWidth, y: containerBottomY + wallHeight)
         )
         rightWallBody.categoryBitMask = CollisionCategory.wall
         rightWallBody.collisionBitMask = CollisionCategory.fruit
@@ -411,6 +412,21 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
         let rightWallNode = SKNode()
         rightWallNode.physicsBody = rightWallBody
         containerNode.addChild(rightWallNode)
+
+        // Physics Ceiling (positioned above the drop zone so fruit cannot fly out of the top of the box)
+        let ceilingY = dropZoneY + 60
+        let ceilingBody = SKPhysicsBody(
+            edgeFrom: CGPoint(x: containerOriginX, y: ceilingY),
+            to: CGPoint(x: containerOriginX + containerWidth, y: ceilingY)
+        )
+        ceilingBody.categoryBitMask = CollisionCategory.wall
+        ceilingBody.collisionBitMask = CollisionCategory.fruit
+        ceilingBody.friction = 0.2
+        ceilingBody.restitution = 0.1
+
+        let ceilingNode = SKNode()
+        ceilingNode.physicsBody = ceilingBody
+        containerNode.addChild(ceilingNode)
     }
 
     public func applyTheme(_ theme: GameTheme) {
@@ -983,6 +999,36 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
             deltaTime = currentTime - lastUpdateTime
         }
         lastUpdateTime = currentTime
+
+        // Safety boundary clamping: guarantee that fruit physics can never escape the container
+        let ceilingY = dropZoneY + 60
+        for child in fruitLayer.children {
+            guard let fruit = child as? FruitNode,
+                  let body = fruit.physicsBody,
+                  body.isDynamic else { continue }
+
+            let r = fruit.effectiveRadius
+            let minX = containerOriginX + r
+            let maxX = containerOriginX + containerWidth - r
+            let minY = containerBottomY + r
+            let maxY = ceilingY - r
+
+            if fruit.position.x < minX {
+                fruit.position.x = minX
+                if body.velocity.dx < 0 { body.velocity.dx = 0 }
+            } else if fruit.position.x > maxX {
+                fruit.position.x = maxX
+                if body.velocity.dx > 0 { body.velocity.dx = 0 }
+            }
+
+            if fruit.position.y < minY {
+                fruit.position.y = minY
+                if body.velocity.dy < 0 { body.velocity.dy = 0 }
+            } else if fruit.position.y > maxY {
+                fruit.position.y = maxY
+                if body.velocity.dy > 0 { body.velocity.dy = 0 }
+            }
+        }
 
         checkDangerLine(deltaTime: deltaTime)
     }
