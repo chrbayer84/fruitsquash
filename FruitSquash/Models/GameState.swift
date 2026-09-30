@@ -9,10 +9,10 @@ public enum GamePhase {
 }
 
 public final class GameState: ObservableObject {
-    private let highScoreKey = "FruitMerge_HighScore"
-    private let muteKey = "FruitMerge_IsMuted"
-    private let hapticsKey = "FruitMerge_IsHapticsEnabled"
-    private let themeKey = "FruitMerge_Theme"
+    private let highScoreKey = "FruitSquash_HighScore"
+    private let muteKey = "FruitSquash_IsMuted"
+    private let hapticsKey = "FruitSquash_IsHapticsEnabled"
+    private let themeKey = "FruitSquash_Theme"
 
     @Published public var phase: GamePhase = .ready
     @Published public var score: Int = 0

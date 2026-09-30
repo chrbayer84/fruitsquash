@@ -1,0 +1,40 @@
+{
+  "name": "LL Fruit Squash AltStore Source",
+  "subtitle": "Source for LL Fruit Squash",
+  "description": "Welcome to the official source for LL Fruit Squash! An addictive physics-based 2D fruit merging puzzle game.",
+  "iconURL": "https://raw.githubusercontent.com/chrbayer84/fruitsquash/master/FruitSquash/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png",
+  "website": "https://github.com/chrbayer84/fruitsquash",
+  "tintColor": "#2E7D32",
+  "featuredApps": [
+    "com.example.FruitSquash"
+  ],
+  "apps": [
+    {
+      "name": "LL Fruit Squash",
+      "bundleIdentifier": "com.example.FruitSquash",
+      "developerName": "Christian Bayer",
+      "subtitle": "Physics-based fruit merging puzzle game",
+      "localizedDescription": "Merge matching fruits from small red currants to giant watermelons! Features landscape/portrait modes, customizable themes (Dark, Light, Green Hills), bomb targeting power-up, single-fruit evolution, and iPad shake controls.",
+      "iconURL": "https://raw.githubusercontent.com/chrbayer84/fruitsquash/master/FruitSquash/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png",
+      "tintColor": "#2E7D32",
+      "category": "games",
+      "screenshots": [],
+      "versions": [
+        {
+          "downloadURL": "https://github.com/chrbayer84/fruitsquash/releases/download/v1.0/FruitSquash.ipa",
+          "size": 5000000,
+          "version": "1.0",
+          "buildVersion": "1",
+          "date": "2026-09-30T12:00:00+00:00",
+          "localizedDescription": "Initial release of LL Fruit Squash.",
+          "minOSVersion": "16.0"
+        }
+      ],
+      "appPermissions": {
+        "entitlements": [],
+        "privacy": {}
+      }
+    }
+  ],
+  "news": []
+}

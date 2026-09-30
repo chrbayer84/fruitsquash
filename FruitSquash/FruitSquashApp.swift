@@ -1,7 +1,7 @@
 import SwiftUI
 
 @main
-struct FruitMergeApp: App {
+struct FruitSquashApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()

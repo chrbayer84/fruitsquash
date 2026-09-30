@@ -45,7 +45,7 @@ public struct HUDView: View {
                 HStack(spacing: 2) {
                     Text("🍉")
                         .font(.system(size: 14))
-                    Text("LL MERGE")
+                    Text("LL SQUASH")
                         .font(.system(size: 11, weight: .black, design: .rounded))
                         .foregroundColor(theme.textColor)
                 }
@@ -204,7 +204,7 @@ public struct HUDView: View {
             HStack(spacing: 5) {
                 Text("🍉")
                     .font(.system(size: 15))
-                Text("LL FRUIT MERGE")
+                Text("LL FRUIT SQUASH")
                     .font(.system(size: 12, weight: .black, design: .rounded))
                     .foregroundColor(theme.textColor)
                     .tracking(0.5)

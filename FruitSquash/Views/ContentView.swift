@@ -123,7 +123,7 @@ public struct ContentView: View {
                 .ignoresSafeArea()
 
             VStack(spacing: 16) {
-                Text("🍉 LL FRUIT MERGE 🍋")
+                Text("🍉 LL FRUIT SQUASH 🍋")
                     .font(.system(size: 26, weight: .black, design: .rounded))
                     .foregroundColor(.white)
 
