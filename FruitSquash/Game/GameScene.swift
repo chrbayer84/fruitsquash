@@ -328,33 +328,53 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
 
         let minDim = min(size.width, size.height)
 
-        // Unified absolute box size that is identical in both Portrait and Landscape
-        let availableWidth = minDim - 32
-        let availableHeight = minDim - 36
-        let boxSize = min(availableWidth, availableHeight) * 0.92
-
-        containerWidth = boxSize
-        containerHeight = boxSize
-
         if isPortrait {
-            // Portrait Layout: Center box horizontally and vertically in the area below top HUD
-            let topPadding = hudOffset + 14
-            let availableAreaHeight = max(240, size.height - topPadding)
+            // Portrait Layout: Center box between top info panel and bottom controls panel on iPhone
+            let topPadding: CGFloat = isPhone ? 78 : (hudOffset + 14)
+            let bottomPadding: CGFloat = isPhone ? 46 : 0
+            let availableAreaHeight = max(240, size.height - topPadding - bottomPadding)
+            let availableWidth = max(240, size.width - 28)
+            let boxSize = min(availableWidth, availableAreaHeight) * (isPhone ? 0.94 : 0.92)
 
+            containerWidth = boxSize
+            containerHeight = boxSize
             containerOriginX = (size.width - boxSize) / 2
-            containerBottomY = (availableAreaHeight - boxSize) / 2
+            containerBottomY = bottomPadding + (availableAreaHeight - boxSize) / 2
             dropZoneY = containerBottomY + containerHeight + 22
             dangerLineY = containerBottomY + containerHeight - 12
         } else {
-            // Landscape Layout: Center box horizontally and vertically in the area to the right of left HUD
-            let leftPadding = hudOffset + 14
-            let availableAreaWidth = size.width - leftPadding
-            let centerX = leftPadding + (availableAreaWidth / 2)
+            if isPhone {
+                // iPhone Landscape: Left Info panel ~160pt, Right Controls panel ~150pt
+                let leftPadding: CGFloat = 160
+                let rightPadding: CGFloat = 150
+                let availableAreaWidth = max(240, size.width - leftPadding - rightPadding)
+                let availableAreaHeight = max(240, size.height - 24)
+                let boxSize = min(availableAreaWidth, availableAreaHeight) * 0.94
 
-            containerOriginX = centerX - (boxSize / 2)
-            containerBottomY = (size.height - boxSize) / 2
-            dropZoneY = containerBottomY + containerHeight + 22
-            dangerLineY = containerBottomY + containerHeight - 12
+                containerWidth = boxSize
+                containerHeight = boxSize
+                let centerX = leftPadding + (availableAreaWidth / 2)
+                containerOriginX = centerX - (boxSize / 2)
+                containerBottomY = (size.height - boxSize) / 2
+                dropZoneY = containerBottomY + containerHeight + 22
+                dangerLineY = containerBottomY + containerHeight - 12
+            } else {
+                // iPad Landscape (Unchanged)
+                let availableWidth = minDim - 32
+                let availableHeight = minDim - 36
+                let boxSize = min(availableWidth, availableHeight) * 0.92
+
+                containerWidth = boxSize
+                containerHeight = boxSize
+                let leftPadding = hudOffset + 14
+                let availableAreaWidth = size.width - leftPadding
+                let centerX = leftPadding + (availableAreaWidth / 2)
+
+                containerOriginX = centerX - (boxSize / 2)
+                containerBottomY = (size.height - boxSize) / 2
+                dropZoneY = containerBottomY + containerHeight + 22
+                dangerLineY = containerBottomY + containerHeight - 12
+            }
         }
 
         // Visual Square Background with Theme Tinting

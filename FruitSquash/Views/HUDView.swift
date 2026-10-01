@@ -23,25 +23,75 @@ public struct HUDView: View {
     var onShake: () -> Void
     var onRestart: () -> Void
 
+    private var isPhone: Bool {
+        UIDevice.current.userInterfaceIdiom == .phone
+    }
+
     private var theme: GameTheme {
         gameState.theme
     }
 
     public var body: some View {
-        if isPortrait {
-            portraitHUD
+        if isPhone {
+            // iPhone Dedicated 2-Panel Layout
+            if isPortrait {
+                iphonePortraitHUD
+            } else {
+                iphoneLandscapeHUD
+            }
         } else {
-            landscapeHUD
+            // iPad Layout (Unchanged)
+            if isPortrait {
+                ipadPortraitHUD
+            } else {
+                ipadLandscapeHUD
+            }
         }
     }
 
-    // MARK: - Portrait Mode HUD (Top Horizontal Bar)
+    // MARK: - iPhone Portrait Layout (Top Stats Panel + Bottom Controls Panel)
 
-    private var portraitHUD: some View {
+    private var iphonePortraitHUD: some View {
+        VStack {
+            // Panel 1: Title, Scores, Next Fruit, Evolution Strip
+            IPhoneInfoPanel(gameState: gameState, theme: theme, isPortrait: true)
+                .padding(.horizontal, 6)
+                .padding(.top, 2)
+
+            Spacer()
+
+            // Panel 2: Action Buttons (Upgrade, Bomb, Shake, Theme, Mute, Restart)
+            IPhoneControlsPanel(gameState: gameState, theme: theme, isPortrait: true, onShake: onShake, onRestart: onRestart)
+                .padding(.horizontal, 6)
+                .padding(.bottom, 4)
+        }
+    }
+
+    // MARK: - iPhone Landscape Layout (Left Stats Panel + Right Controls Panel)
+
+    private var iphoneLandscapeHUD: some View {
+        HStack(alignment: .top) {
+            // Panel 1: Stats & Info on the Left
+            IPhoneInfoPanel(gameState: gameState, theme: theme, isPortrait: false)
+                .frame(width: 155)
+                .padding(.leading, 4)
+                .padding(.vertical, 3)
+
+            Spacer()
+
+            // Panel 2: Controls & Actions on the Right
+            IPhoneControlsPanel(gameState: gameState, theme: theme, isPortrait: false, onShake: onShake, onRestart: onRestart)
+                .frame(width: 145)
+                .padding(.trailing, 4)
+                .padding(.vertical, 3)
+        }
+    }
+
+    // MARK: - iPad Portrait Layout (Unchanged)
+
+    private var ipadPortraitHUD: some View {
         VStack(spacing: 5) {
-            // Top Row: Title, Scores, Next Fruit, Upgrade, Bomb, Shake, Theme, Quick Controls
             HStack(spacing: 4) {
-                // Title
                 HStack(spacing: 2) {
                     Text("🍉")
                         .font(.system(size: 14))
@@ -52,11 +102,9 @@ public struct HUDView: View {
 
                 Spacer(minLength: 1)
 
-                // Score Cards
                 ScoreCard(title: "SCORE", value: "\(gameState.score)", color: .orange, theme: theme)
                 ScoreCard(title: "BEST", value: "\(gameState.highScore)", color: .yellow, theme: theme)
 
-                // Next Fruit preview
                 HStack(spacing: 2) {
                     Text("NEXT")
                         .font(.system(size: 7, weight: .black, design: .rounded))
@@ -70,7 +118,7 @@ public struct HUDView: View {
                         .fill(theme.cardBackground)
                 )
 
-                // Upgrade Fruit Button (Requires 2500 pts, deducts 2500 on click)
+                // Upgrade Button
                 Button(action: {
                     HapticManager.shared.buttonTapFeedback(enabled: gameState.isHapticsEnabled)
                     gameState.toggleUpgradeMode()
@@ -93,7 +141,7 @@ public struct HUDView: View {
                 }
                 .disabled(!gameState.canUseUpgrade && !gameState.isUpgradeModeActive)
 
-                // Bomb Tool Button (Requires 1000 pts, deducts 1000 on click)
+                // Bomb Button
                 Button(action: {
                     HapticManager.shared.buttonTapFeedback(enabled: gameState.isHapticsEnabled)
                     gameState.toggleBombMode()
@@ -116,7 +164,7 @@ public struct HUDView: View {
                 }
                 .disabled(!gameState.canUseBomb && !gameState.isBombModeActive)
 
-                // Shake Board Button
+                // Shake Button
                 Button(action: onShake) {
                     Image(systemName: "waveform.path")
                         .font(.system(size: 10, weight: .black))
@@ -132,7 +180,7 @@ public struct HUDView: View {
                         .cornerRadius(6)
                 }
 
-                // Theme Switcher Button
+                // Theme
                 Button(action: {
                     HapticManager.shared.buttonTapFeedback(enabled: gameState.isHapticsEnabled)
                     gameState.cycleTheme()
@@ -179,7 +227,6 @@ public struct HUDView: View {
                 }
             }
 
-            // Bottom 2-Line Evolution Strip
             EvolutionTwoLinesView()
         }
         .padding(.horizontal, 6)
@@ -196,11 +243,10 @@ public struct HUDView: View {
         .padding(.top, 4)
     }
 
-    // MARK: - Landscape Mode HUD (Left Sidebar)
+    // MARK: - iPad Landscape Layout (Unchanged)
 
-    private var landscapeHUD: some View {
+    private var ipadLandscapeHUD: some View {
         VStack(alignment: .leading, spacing: 6) {
-            // App Title Header + Theme Switcher
             HStack(spacing: 5) {
                 Text("🍉")
                     .font(.system(size: 15))
@@ -227,13 +273,11 @@ public struct HUDView: View {
             }
             .padding(.top, 2)
 
-            // Score & Best Score Card
             HStack(spacing: 5) {
                 ScoreCard(title: "SCORE", value: "\(gameState.score)", color: .orange, theme: theme)
                 ScoreCard(title: "BEST", value: "\(gameState.highScore)", color: .yellow, theme: theme)
             }
 
-            // Next Fruit Preview Card
             HStack(spacing: 6) {
                 VStack(alignment: .leading, spacing: 1) {
                     Text("NEXT")
@@ -260,7 +304,6 @@ public struct HUDView: View {
                     )
             )
 
-            // Evolution / Merge Chain Guide (Split into 2 lines, full width)
             VStack(alignment: .leading, spacing: 3) {
                 Text("MERGE EVOLUTION")
                     .font(.system(size: 8, weight: .black, design: .rounded))
@@ -282,7 +325,7 @@ public struct HUDView: View {
 
             Spacer()
 
-            // Upgrade Fruit Button (Requires 2500 pts, deducts 2500 on click)
+            // Upgrade Button
             Button(action: {
                 HapticManager.shared.buttonTapFeedback(enabled: gameState.isHapticsEnabled)
                 gameState.toggleUpgradeMode()
@@ -305,7 +348,7 @@ public struct HUDView: View {
             }
             .disabled(!gameState.canUseUpgrade && !gameState.isUpgradeModeActive)
 
-            // Bomb Power-Up Button (Requires 1000 pts, deducts 1000 on click)
+            // Bomb Button
             Button(action: {
                 HapticManager.shared.buttonTapFeedback(enabled: gameState.isHapticsEnabled)
                 gameState.toggleBombMode()
@@ -328,7 +371,7 @@ public struct HUDView: View {
             }
             .disabled(!gameState.canUseBomb && !gameState.isBombModeActive)
 
-            // Shake Board Action Button
+            // Shake Button
             Button(action: onShake) {
                 HStack(spacing: 5) {
                     Image(systemName: "waveform.path")
@@ -349,7 +392,7 @@ public struct HUDView: View {
                 .shadow(color: Color.purple.opacity(0.30), radius: 3, y: 2)
             }
 
-            // Bottom Control Bar (Mute, Haptics, Restart)
+            // Bottom Control Bar
             HStack(spacing: 4) {
                 Button(action: {
                     HapticManager.shared.buttonTapFeedback(enabled: gameState.isHapticsEnabled)
@@ -455,6 +498,297 @@ public struct HUDView: View {
     }
 }
 
+// MARK: - iPhone Info & Stats Panel
+
+public struct IPhoneInfoPanel: View {
+    @ObservedObject var gameState: GameState
+    let theme: GameTheme
+    let isPortrait: Bool
+
+    public var body: some View {
+        VStack(spacing: 4) {
+            HStack(spacing: 4) {
+                HStack(spacing: 2) {
+                    Text("🍉")
+                        .font(.system(size: 13))
+                    Text(isPortrait ? "LL SQUASH" : "SQUASH")
+                        .font(.system(size: 10.5, weight: .black, design: .rounded))
+                        .foregroundColor(theme.textColor)
+                }
+
+                Spacer(minLength: 2)
+
+                ScoreCard(title: "SCORE", value: "\(gameState.score)", color: .orange, theme: theme)
+                ScoreCard(title: "BEST", value: "\(gameState.highScore)", color: .yellow, theme: theme)
+
+                HStack(spacing: 2) {
+                    Text("NEXT")
+                        .font(.system(size: 6.5, weight: .black, design: .rounded))
+                        .foregroundColor(theme.subtitleColor)
+                    FruitIconView(fruitType: gameState.nextFruit, size: 16)
+                }
+                .padding(.horizontal, 4)
+                .padding(.vertical, 2)
+                .background(
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .fill(theme.cardBackground)
+                )
+            }
+
+            EvolutionTwoLinesView()
+        }
+        .padding(.horizontal, 6)
+        .padding(.vertical, 4)
+        .background(
+            RoundedRectangle(cornerRadius: 11, style: .continuous)
+                .fill(theme.hudBackground)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 11, style: .continuous)
+                        .stroke(theme.cardBorder, lineWidth: 1)
+                )
+        )
+    }
+}
+
+// MARK: - iPhone Controls & Actions Panel
+
+public struct IPhoneControlsPanel: View {
+    @ObservedObject var gameState: GameState
+    let theme: GameTheme
+    let isPortrait: Bool
+    var onShake: () -> Void
+    var onRestart: () -> Void
+
+    public var body: some View {
+        if isPortrait {
+            // Horizontal bottom bar on iPhone portrait
+            HStack(spacing: 4) {
+                // Upgrade
+                Button(action: {
+                    HapticManager.shared.buttonTapFeedback(enabled: gameState.isHapticsEnabled)
+                    gameState.toggleUpgradeMode()
+                }) {
+                    HStack(spacing: 2) {
+                        Image(systemName: "arrow.up.circle.fill")
+                            .font(.system(size: 9, weight: .black))
+                        Text(gameState.isUpgradeModeActive ? "ACTIVE" : "2.5K")
+                            .font(.system(size: 7.5, weight: .heavy, design: .rounded))
+                    }
+                    .foregroundColor(gameState.canUseUpgrade ? .white : .white.opacity(0.4))
+                    .frame(maxWidth: .infinity, minHeight: 28)
+                    .background(upgradeBackground)
+                    .cornerRadius(6)
+                    .overlay(RoundedRectangle(cornerRadius: 6).stroke(upgradeBorder, lineWidth: 1.5))
+                }
+                .disabled(!gameState.canUseUpgrade && !gameState.isUpgradeModeActive)
+
+                // Bomb
+                Button(action: {
+                    HapticManager.shared.buttonTapFeedback(enabled: gameState.isHapticsEnabled)
+                    gameState.toggleBombMode()
+                }) {
+                    HStack(spacing: 2) {
+                        Text("💣").font(.system(size: 9))
+                        Text(gameState.isBombModeActive ? "ACTIVE" : "1K")
+                            .font(.system(size: 7.5, weight: .heavy, design: .rounded))
+                    }
+                    .foregroundColor(gameState.canUseBomb ? .white : .white.opacity(0.4))
+                    .frame(maxWidth: .infinity, minHeight: 28)
+                    .background(bombBackground)
+                    .cornerRadius(6)
+                    .overlay(RoundedRectangle(cornerRadius: 6).stroke(bombBorder, lineWidth: 1.5))
+                }
+                .disabled(!gameState.canUseBomb && !gameState.isBombModeActive)
+
+                // Shake Board
+                Button(action: onShake) {
+                    HStack(spacing: 2) {
+                        Image(systemName: "waveform.path").font(.system(size: 9, weight: .black))
+                        Text("SHAKE").font(.system(size: 7.5, weight: .heavy, design: .rounded))
+                    }
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity, minHeight: 28)
+                    .background(LinearGradient(colors: [.purple, .indigo], startPoint: .topLeading, endPoint: .bottomTrailing))
+                    .cornerRadius(6)
+                }
+
+                // Theme
+                Button(action: {
+                    HapticManager.shared.buttonTapFeedback(enabled: gameState.isHapticsEnabled)
+                    gameState.cycleTheme()
+                }) {
+                    Image(systemName: theme.iconName)
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundColor(theme.textColor)
+                        .frame(width: 28, height: 28)
+                        .background(RoundedRectangle(cornerRadius: 6).fill(theme.cardBackground))
+                }
+
+                // Mute
+                Button(action: {
+                    HapticManager.shared.buttonTapFeedback(enabled: gameState.isHapticsEnabled)
+                    gameState.toggleMute()
+                }) {
+                    Image(systemName: gameState.isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill")
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundColor(gameState.isMuted ? .red.opacity(0.8) : theme.textColor)
+                        .frame(width: 28, height: 28)
+                        .background(RoundedRectangle(cornerRadius: 6).fill(theme.cardBackground))
+                }
+
+                // Restart
+                Button(action: {
+                    HapticManager.shared.buttonTapFeedback(enabled: gameState.isHapticsEnabled)
+                    AudioManager.shared.playButtonTap(isMuted: gameState.isMuted)
+                    onRestart()
+                }) {
+                    Image(systemName: "arrow.clockwise")
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundColor(.white)
+                        .frame(width: 28, height: 28)
+                        .background(RoundedRectangle(cornerRadius: 6).fill(Color.orange.opacity(0.85)))
+                }
+            }
+            .padding(.horizontal, 6)
+            .padding(.vertical, 4)
+            .background(
+                RoundedRectangle(cornerRadius: 11, style: .continuous)
+                    .fill(theme.hudBackground)
+                    .overlay(RoundedRectangle(cornerRadius: 11, style: .continuous).stroke(theme.cardBorder, lineWidth: 1))
+            )
+        } else {
+            // Vertical stacked controls for iPhone landscape on the right
+            VStack(spacing: 4) {
+                // Upgrade
+                Button(action: {
+                    HapticManager.shared.buttonTapFeedback(enabled: gameState.isHapticsEnabled)
+                    gameState.toggleUpgradeMode()
+                }) {
+                    HStack(spacing: 3) {
+                        Image(systemName: "arrow.up.circle.fill").font(.system(size: 10, weight: .black))
+                        Text(gameState.isUpgradeModeActive ? "SELECT" : "UP (2.5K)").font(.system(size: 8.5, weight: .heavy, design: .rounded))
+                    }
+                    .foregroundColor(gameState.canUseUpgrade ? .white : .white.opacity(0.4))
+                    .frame(maxWidth: .infinity, minHeight: 26)
+                    .background(upgradeBackground)
+                    .cornerRadius(6)
+                    .overlay(RoundedRectangle(cornerRadius: 6).stroke(upgradeBorder, lineWidth: 1.5))
+                }
+                .disabled(!gameState.canUseUpgrade && !gameState.isUpgradeModeActive)
+
+                // Bomb
+                Button(action: {
+                    HapticManager.shared.buttonTapFeedback(enabled: gameState.isHapticsEnabled)
+                    gameState.toggleBombMode()
+                }) {
+                    HStack(spacing: 3) {
+                        Text("💣").font(.system(size: 9))
+                        Text(gameState.isBombModeActive ? "SELECT" : "BOMB (1K)").font(.system(size: 8.5, weight: .heavy, design: .rounded))
+                    }
+                    .foregroundColor(gameState.canUseBomb ? .white : .white.opacity(0.4))
+                    .frame(maxWidth: .infinity, minHeight: 26)
+                    .background(bombBackground)
+                    .cornerRadius(6)
+                    .overlay(RoundedRectangle(cornerRadius: 6).stroke(bombBorder, lineWidth: 1.5))
+                }
+                .disabled(!gameState.canUseBomb && !gameState.isBombModeActive)
+
+                // Shake Board
+                Button(action: onShake) {
+                    HStack(spacing: 3) {
+                        Image(systemName: "waveform.path").font(.system(size: 10, weight: .black))
+                        Text("SHAKE").font(.system(size: 8.5, weight: .heavy, design: .rounded))
+                    }
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity, minHeight: 26)
+                    .background(LinearGradient(colors: [.purple, .indigo], startPoint: .leading, endPoint: .trailing))
+                    .cornerRadius(6)
+                }
+
+                Spacer()
+
+                // Theme, Mute, Restart
+                HStack(spacing: 3) {
+                    Button(action: {
+                        HapticManager.shared.buttonTapFeedback(enabled: gameState.isHapticsEnabled)
+                        gameState.cycleTheme()
+                    }) {
+                        Image(systemName: theme.iconName).font(.system(size: 9, weight: .bold)).foregroundColor(theme.textColor)
+                            .frame(maxWidth: .infinity, minHeight: 24)
+                            .background(RoundedRectangle(cornerRadius: 5).fill(theme.cardBackground))
+                    }
+                    Button(action: {
+                        HapticManager.shared.buttonTapFeedback(enabled: gameState.isHapticsEnabled)
+                        gameState.toggleMute()
+                    }) {
+                        Image(systemName: gameState.isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill").font(.system(size: 9, weight: .bold)).foregroundColor(gameState.isMuted ? .red.opacity(0.8) : theme.textColor)
+                            .frame(maxWidth: .infinity, minHeight: 24)
+                            .background(RoundedRectangle(cornerRadius: 5).fill(theme.cardBackground))
+                    }
+                    Button(action: {
+                        HapticManager.shared.buttonTapFeedback(enabled: gameState.isHapticsEnabled)
+                        AudioManager.shared.playButtonTap(isMuted: gameState.isMuted)
+                        onRestart()
+                    }) {
+                        Image(systemName: "arrow.clockwise").font(.system(size: 9, weight: .bold)).foregroundColor(.white)
+                            .frame(maxWidth: .infinity, minHeight: 24)
+                            .background(RoundedRectangle(cornerRadius: 5).fill(Color.orange.opacity(0.85)))
+                    }
+                }
+            }
+            .padding(.horizontal, 5)
+            .padding(.vertical, 4)
+            .background(
+                RoundedRectangle(cornerRadius: 11, style: .continuous)
+                    .fill(theme.hudBackground)
+                    .overlay(RoundedRectangle(cornerRadius: 11, style: .continuous).stroke(theme.cardBorder, lineWidth: 1))
+            )
+        }
+    }
+
+    @ViewBuilder
+    private var upgradeBackground: some View {
+        if gameState.isUpgradeModeActive {
+            LinearGradient(colors: [.green, .mint], startPoint: .leading, endPoint: .trailing)
+        } else if gameState.canUseUpgrade {
+            LinearGradient(colors: [Color(red: 0.18, green: 0.62, blue: 0.38), Color(red: 0.10, green: 0.45, blue: 0.28)], startPoint: .leading, endPoint: .trailing)
+        } else {
+            LinearGradient(colors: [Color(red: 0.14, green: 0.20, blue: 0.16), Color(red: 0.10, green: 0.14, blue: 0.12)], startPoint: .leading, endPoint: .trailing)
+        }
+    }
+
+    @ViewBuilder
+    private var bombBackground: some View {
+        if gameState.isBombModeActive {
+            LinearGradient(colors: [.red, .orange], startPoint: .leading, endPoint: .trailing)
+        } else if gameState.canUseBomb {
+            LinearGradient(colors: [Color(red: 0.85, green: 0.20, blue: 0.20), Color(red: 0.60, green: 0.08, blue: 0.08)], startPoint: .leading, endPoint: .trailing)
+        } else {
+            LinearGradient(colors: [Color(red: 0.16, green: 0.18, blue: 0.24), Color(red: 0.12, green: 0.14, blue: 0.20)], startPoint: .leading, endPoint: .trailing)
+        }
+    }
+
+    private var upgradeBorder: Color {
+        if gameState.isUpgradeModeActive {
+            return .yellow
+        } else if gameState.canUseUpgrade {
+            return Color.green.opacity(0.4)
+        } else {
+            return Color.white.opacity(0.08)
+        }
+    }
+
+    private var bombBorder: Color {
+        if gameState.isBombModeActive {
+            return .yellow
+        } else if gameState.canUseBomb {
+            return Color.red.opacity(0.4)
+        } else {
+            return Color.white.opacity(0.08)
+        }
+    }
+}
+
 // MARK: - 2-Line Evolution Strip Component
 
 private struct EvolutionTwoLinesView: View {
@@ -462,15 +796,15 @@ private struct EvolutionTwoLinesView: View {
     private let row2: [FruitType] = [.apple, .peach, .coconut, .dragonfruit, .pineapple, .watermelon]
 
     var body: some View {
-        VStack(spacing: 4) {
+        VStack(spacing: 3) {
             // Row 1
             HStack(spacing: 0) {
                 ForEach(0..<row1.count, id: \.self) { idx in
-                    FruitIconView(fruitType: row1[idx], size: 17)
+                    FruitIconView(fruitType: row1[idx], size: 16)
                     if idx < row1.count - 1 {
                         Spacer(minLength: 1)
                         Image(systemName: "arrow.right")
-                            .font(.system(size: 6, weight: .bold))
+                            .font(.system(size: 5.5, weight: .bold))
                             .foregroundColor(.gray.opacity(0.5))
                         Spacer(minLength: 1)
                     }
@@ -481,11 +815,11 @@ private struct EvolutionTwoLinesView: View {
             // Row 2
             HStack(spacing: 0) {
                 ForEach(0..<row2.count, id: \.self) { idx in
-                    FruitIconView(fruitType: row2[idx], size: 17)
+                    FruitIconView(fruitType: row2[idx], size: 16)
                     if idx < row2.count - 1 {
                         Spacer(minLength: 1)
                         Image(systemName: "arrow.right")
-                            .font(.system(size: 6, weight: .bold))
+                            .font(.system(size: 5.5, weight: .bold))
                             .foregroundColor(.gray.opacity(0.5))
                         Spacer(minLength: 1)
                     }
@@ -506,23 +840,23 @@ private struct ScoreCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 1) {
             Text(title)
-                .font(.system(size: 7.5, weight: .black, design: .rounded))
+                .font(.system(size: 7, weight: .black, design: .rounded))
                 .foregroundColor(color.opacity(0.95))
 
             Text(value)
-                .font(.system(size: 12.5, weight: .heavy, design: .rounded))
+                .font(.system(size: 11.5, weight: .heavy, design: .rounded))
                 .foregroundColor(theme.textColor)
                 .lineLimit(1)
                 .minimumScaleFactor(0.65)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 4)
-        .padding(.vertical, 3)
+        .padding(.vertical, 2)
         .background(
-            RoundedRectangle(cornerRadius: 6, style: .continuous)
+            RoundedRectangle(cornerRadius: 5, style: .continuous)
                 .fill(theme.cardBackground)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                    RoundedRectangle(cornerRadius: 5, style: .continuous)
                         .stroke(color.opacity(0.35), lineWidth: 1)
                 )
         )
