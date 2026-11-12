@@ -8,6 +8,8 @@ public struct ContentView: View {
     private let landscapeHudWidth: CGFloat = 210
     private let portraitHudHeight: CGFloat = 85
 
+    private static let privacyPolicyURL = URL(string: "https://chrbayer84.github.io/fruitsquash/PRIVACY.html")!
+
     public init() {}
 
     public var body: some View {
@@ -153,6 +155,14 @@ public struct ContentView: View {
                         .cornerRadius(18)
                         .shadow(color: Color.orange.opacity(0.4), radius: 10, y: 4)
                 }
+
+                Link(destination: Self.privacyPolicyURL) {
+                    Text("Privacy Policy")
+                        .font(.system(size: 10.5, weight: .medium, design: .rounded))
+                        .foregroundColor(.white.opacity(0.55))
+                        .underline()
+                }
+                .padding(.top, 2)
             }
             .padding(26)
             .background(
