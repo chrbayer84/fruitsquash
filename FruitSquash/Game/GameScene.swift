@@ -7,6 +7,8 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
     // Scene dimensions & orientation
     public var isPortrait: Bool = false
     public var hudOffset: CGFloat = 210
+    /// Top safe-area inset (notch / Dynamic Island). Keeps the arena clear of the top HUD.
+    public var safeAreaTop: CGFloat = 0
     public var isPhone: Bool { UIDevice.current.userInterfaceIdiom == .phone }
     // 50% scale on iPhone to provide ample usable area, 100% scale on iPad
     public var scaleFactor: CGFloat { isPhone ? 0.50 : 1.0 }
@@ -148,10 +150,11 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
         }
     }
 
-    public func updateLayout(size: CGSize, isPortrait: Bool, hudOffset: CGFloat) {
+    public func updateLayout(size: CGSize, isPortrait: Bool, hudOffset: CGFloat, safeAreaTop: CGFloat = 0) {
         self.size = size
         self.isPortrait = isPortrait
         self.hudOffset = hudOffset
+        self.safeAreaTop = safeAreaTop
 
         // Record previous container bounds for proportional fruit translation
         prevOriginX = containerOriginX
@@ -330,7 +333,7 @@ public final class GameScene: SKScene, SKPhysicsContactDelegate {
 
         if isPortrait {
             // Portrait Layout: Center box between top info panel and bottom controls panel on iPhone
-            let topPadding: CGFloat = isPhone ? 78 : (hudOffset + 14)
+            let topPadding: CGFloat = isPhone ? (78 + safeAreaTop) : (hudOffset + 14)
             let bottomPadding: CGFloat = isPhone ? 46 : 0
             let availableAreaHeight = max(240, size.height - topPadding - bottomPadding)
             let availableWidth = max(240, size.width - 28)

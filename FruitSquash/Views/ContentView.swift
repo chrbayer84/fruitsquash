@@ -1,5 +1,6 @@
 import SwiftUI
 import SpriteKit
+import UIKit
 
 public struct ContentView: View {
     @StateObject private var gameState = GameState()
@@ -9,6 +10,27 @@ public struct ContentView: View {
     private let portraitHudHeight: CGFloat = 85
 
     private static let privacyPolicyURL = URL(string: "https://chrbayer84.github.io/fruitsquash/PRIVACY.html")!
+
+    private var isPhone: Bool { UIDevice.current.userInterfaceIdiom == .phone }
+
+    /// Top inset required on iPhones whose camera is integrated into the display
+    /// (notch / Dynamic Island). Returns 0 on devices without a top cutout.
+    private func topSafeAreaInset(_ geometry: GeometryProxy, isPortrait: Bool) -> CGFloat {
+        guard isPortrait, isPhone else { return 0 }
+        let window = UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .flatMap { $0.windows }
+            .first { $0.isKeyWindow }
+        return max(geometry.safeAreaInsets.top, window?.safeAreaInsets.top ?? 0)
+    }
+
+    private func hudIgnoredEdges(isPortrait: Bool) -> Edge.Set {
+        if isPortrait {
+            // iPhone: keep the top HUD out of the sensor-housing area.
+            return isPhone ? [.horizontal] : [.top, .horizontal]
+        }
+        return [.leading, .top, .bottom]
+    }
 
     public init() {}
 
@@ -41,7 +63,7 @@ public struct ContentView: View {
                         restartGame()
                     }
                 )
-                .ignoresSafeArea(edges: isPortrait ? [.top, .horizontal] : [.leading, .top, .bottom])
+                .ignoresSafeArea(edges: hudIgnoredEdges(isPortrait: isPortrait))
 
                 // Start Screen Overlay
                 if gameState.phase == .ready {
@@ -71,12 +93,20 @@ public struct ContentView: View {
                 }
             }
             .onAppear {
-                setupScene(size: geometry.size, isPortrait: isPortrait)
+                setupScene(
+                    size: geometry.size,
+                    isPortrait: isPortrait,
+                    safeAreaTop: topSafeAreaInset(geometry, isPortrait: isPortrait)
+                )
                 configureMotionShake()
             }
             .onChange(of: geometry.size) { newSize in
                 let newIsPortrait = newSize.width < newSize.height
-                setupScene(size: newSize, isPortrait: newIsPortrait)
+                setupScene(
+                    size: newSize,
+                    isPortrait: newIsPortrait,
+                    safeAreaTop: topSafeAreaInset(geometry, isPortrait: newIsPortrait)
+                )
             }
             .onChange(of: gameState.theme) { newTheme in
                 scene?.applyTheme(newTheme)
@@ -177,12 +207,17 @@ public struct ContentView: View {
         }
     }
 
-    private func setupScene(size: CGSize, isPortrait: Bool) {
+    private func setupScene(size: CGSize, isPortrait: Bool, safeAreaTop: CGFloat) {
         guard size.width > 0 && size.height > 0 else { return }
         let hudOffset = isPortrait ? portraitHudHeight : landscapeHudWidth
 
         if let existing = scene {
-            existing.updateLayout(size: size, isPortrait: isPortrait, hudOffset: hudOffset)
+            existing.updateLayout(
+                size: size,
+                isPortrait: isPortrait,
+                hudOffset: hudOffset,
+                safeAreaTop: safeAreaTop
+            )
             existing.applyTheme(gameState.theme)
         } else {
             let newScene = GameScene(size: size)
@@ -190,6 +225,7 @@ public struct ContentView: View {
             newScene.gameState = gameState
             newScene.isPortrait = isPortrait
             newScene.hudOffset = hudOffset
+            newScene.safeAreaTop = safeAreaTop
             self.scene = newScene
         }
     }
