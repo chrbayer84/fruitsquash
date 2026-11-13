@@ -15,15 +15,15 @@
 		AA0000202D00000000000007 /* GameScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000102D00000000000007 /* GameScene.swift */; };
 		AA0000202D00000000000008 /* AudioManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000102D00000000000008 /* AudioManager.swift */; };
 		AA0000202D00000000000009 /* HapticManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000102D00000000000009 /* HapticManager.swift */; };
-		AA0000202D00000000000010 /* MotionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000102D00000000000010 /* MotionManager.swift */; };
 		AA0000202D0000000000000A /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000102D0000000000000A /* ContentView.swift */; };
 		AA0000202D0000000000000B /* HUDView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000102D0000000000000B /* HUDView.swift */; };
 		AA0000202D0000000000000C /* GameOverOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000102D0000000000000C /* GameOverOverlay.swift */; };
+		AA0000202D0000000000000E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA0000102D0000000000000E /* Assets.xcassets */; };
+		AA0000202D00000000000010 /* MotionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000102D00000000000010 /* MotionManager.swift */; };
 		AA0000202D00000000000011 /* GameWonOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000102D00000000000011 /* GameWonOverlay.swift */; };
 		AA0000202D00000000000012 /* GameTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000102D00000000000012 /* GameTheme.swift */; };
 		AA0000202D00000000000013 /* GreenHillsBackgroundView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000102D00000000000013 /* GreenHillsBackgroundView.swift */; };
 		AA0000202D00000000000014 /* GameDebugConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000102D00000000000014 /* GameDebugConfig.swift */; };
-		AA0000202D0000000000000E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA0000102D0000000000000E /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -36,16 +36,16 @@
 		AA0000102D00000000000007 /* GameScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameScene.swift; sourceTree = "<group>"; };
 		AA0000102D00000000000008 /* AudioManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioManager.swift; sourceTree = "<group>"; };
 		AA0000102D00000000000009 /* HapticManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticManager.swift; sourceTree = "<group>"; };
-		AA0000102D00000000000010 /* MotionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MotionManager.swift; sourceTree = "<group>"; };
 		AA0000102D0000000000000A /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		AA0000102D0000000000000B /* HUDView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HUDView.swift; sourceTree = "<group>"; };
 		AA0000102D0000000000000C /* GameOverOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameOverOverlay.swift; sourceTree = "<group>"; };
+		AA0000102D0000000000000E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		AA0000102D0000000000000F /* FruitSquash.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FruitSquash.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		AA0000102D00000000000010 /* MotionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MotionManager.swift; sourceTree = "<group>"; };
 		AA0000102D00000000000011 /* GameWonOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameWonOverlay.swift; sourceTree = "<group>"; };
 		AA0000102D00000000000012 /* GameTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameTheme.swift; sourceTree = "<group>"; };
 		AA0000102D00000000000013 /* GreenHillsBackgroundView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GreenHillsBackgroundView.swift; sourceTree = "<group>"; };
 		AA0000102D00000000000014 /* GameDebugConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameDebugConfig.swift; sourceTree = "<group>"; };
-		AA0000102D0000000000000E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		AA0000102D0000000000000F /* FruitSquash.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FruitSquash.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -344,18 +344,21 @@
 		AA0000902D00000000000003 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
+				CODE_SIGN_STYLE = Manual;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "";
+				DEVELOPMENT_TEAM = "";
+				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = VRRTAP3C2B;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
-				DEVELOPMENT_TEAM = VR3HG6C7W9;
 				INFOPLIST_FILE = FruitSquash/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UIStatusBarHidden = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UIViewControllerBasedStatusBarAppearance = NO;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -364,6 +367,8 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.github.chrbayer84.FruitSquash;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "Fruit Squash App Store";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -373,18 +378,21 @@
 		AA0000902D00000000000004 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
+				CODE_SIGN_STYLE = Manual;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "";
+				DEVELOPMENT_TEAM = "";
+				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = VRRTAP3C2B;
 				ENABLE_PREVIEWS = YES;
-				DEVELOPMENT_TEAM = VR3HG6C7W9;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = FruitSquash/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UIStatusBarHidden = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UIViewControllerBasedStatusBarAppearance = NO;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -393,6 +401,8 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.github.chrbayer84.FruitSquash;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "Fruit Squash App Store";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
