@@ -6,12 +6,12 @@
   "website": "https://github.com/chrbayer84/fruitsquash",
   "tintColor": "#2E7D32",
   "featuredApps": [
-    "com.example.FruitSquash"
+    "com.github.chrbayer84.FruitSquash"
   ],
   "apps": [
     {
       "name": "LL Fruit Squash",
-      "bundleIdentifier": "com.example.FruitSquash",
+      "bundleIdentifier": "com.github.chrbayer84.FruitSquash",
       "developerName": "Christian Bayer",
       "subtitle": "Physics-based fruit merging puzzle game",
       "localizedDescription": "Merge matching fruits from small red currants to giant watermelons! Features landscape/portrait modes, customizable themes (Dark, Light, Green Hills), bomb targeting power-up, single-fruit evolution, and iPad shake controls.",
