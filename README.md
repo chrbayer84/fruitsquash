@@ -1,6 +1,6 @@
 # LL Fruit Squash
 
-LL Fruit Squash is an physics-based 2D fruit merging puzzle game for iPhone and iPad. Drop fruits into the box and merge matching pairs to evolve them — starting with tiny red currants and working your way up to giant watermelons. Don't let the pile reach the danger line!
+LL Fruit Squash is a physics-based 2D fruit merging puzzle game for iPhone and iPad. Drop fruits into the box and merge matching pairs to evolve them — starting with tiny red currants and working your way up to giant watermelons. Don't let the pile reach the danger line!
 
 ## Installation
 
